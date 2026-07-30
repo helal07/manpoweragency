@@ -4,10 +4,14 @@
         <!-- Logo Area -->
         <div class="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-900/50">
             <a href="{{ route('home') }}" class="flex items-center gap-3 group">
-                <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold group-hover:bg-blue-500 transition-colors">
-                    {{ substr(config('app.name', 'M'), 0, 1) }}
-                </div>
-                <span class="font-bold text-white tracking-wide truncate">{{ config('app.name', 'Manpower') }}</span>
+                @if(!empty($siteSettings['logo_url']))
+                    <img src="{{ $siteSettings['logo_url'] }}" alt="{{ $siteSettings['site_name'] ?? 'Company Logo' }}" class="h-8 w-auto object-contain">
+                @else
+                    <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold group-hover:bg-blue-500 transition-colors">
+                        {{ strtoupper(substr($siteSettings['site_name'] ?? 'M', 0, 1)) }}
+                    </div>
+                @endif
+                <span class="font-bold text-white tracking-wide whitespace-normal leading-tight text-sm">{{ $siteSettings['site_name'] ?? config('app.name', 'Manpower') }}</span>
             </a>
             <button @click="sidebarOpen = false" class="ml-auto lg:hidden text-slate-400 hover:text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>

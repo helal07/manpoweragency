@@ -176,6 +176,10 @@ class AdminPanelProvider extends PanelProvider
                 RecruitmentOverviewChart::class,
                 LatestJobCircularsWidget::class,
             ])
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::FOOTER,
+                fn () => view('filament.footer'),
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
