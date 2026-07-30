@@ -12,7 +12,7 @@ class ApplicationController extends Controller
     public function index()
     {
         $applications = JobApplication::with('jobCircular')
-            ->where('user_id', auth()->id())
+            ->where('applicant_id', auth()->id())
             ->latest()
             ->get();
             
@@ -21,11 +21,35 @@ class ApplicationController extends Controller
     
     public function show(JobApplication $application)
     {
-        if ($application->user_id !== auth()->id()) {
+        if ($application->applicant_id !== auth()->id()) {
             abort(403);
         }
         
         $application->load('jobCircular');
         return view('applicant.applications.show', compact('application'));
+    }
+    
+    public function store(Request $request)
+    {
+        $request->validate([
+            'job_circular_id' => 'required|exists:job_circulars,id',
+        ]);
+        
+        // Ensure they haven't applied already
+        $existing = JobApplication::where('applicant_id', auth()->id())
+            ->where('job_circular_id', $request->job_circular_id)
+            ->first();
+            
+        if ($existing) {
+            return back()->with('error', 'You have already applied for this position.');
+        }
+
+        JobApplication::create([
+            'applicant_id' => auth()->id(),
+            'job_circular_id' => $request->job_circular_id,
+            'status' => 'pending',
+        ]);
+
+        return back()->with('success', 'Your application has been submitted successfully!');
     }
 }

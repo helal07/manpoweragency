@@ -62,10 +62,13 @@ Route::middleware(['auth:web'])->group(function () {
     
     // Applications
     Route::get('/applications', [\App\Http\Controllers\Applicant\ApplicationController::class, 'index'])->name('applications.index');
+    Route::post('/applications', [\App\Http\Controllers\Applicant\ApplicationController::class, 'store'])->name('applications.store');
     Route::get('/applications/{application}', [\App\Http\Controllers\Applicant\ApplicationController::class, 'show'])->name('applications.show');
     
     // Saved Jobs
     Route::get('/saved-jobs', [\App\Http\Controllers\Applicant\SavedJobController::class, 'index'])->name('saved-jobs.index');
+    Route::post('/saved-jobs', [\App\Http\Controllers\Applicant\SavedJobController::class, 'store'])->name('saved-jobs.store');
+    Route::delete('/saved-jobs', [\App\Http\Controllers\Applicant\SavedJobController::class, 'destroy'])->name('saved-jobs.destroy');
     
     // Security
     Route::get('/security', function() {

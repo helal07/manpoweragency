@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Applicant extends Authenticatable
+class Applicant extends Authenticatable implements HasMedia
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, InteractsWithMedia;
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +24,10 @@ class Applicant extends Authenticatable
         'phone',
         'nid_passport',
         'password',
+        'current_address',
+        'permanent_address',
+        'linkedin_url',
+        'resume_path',
     ];
 
     /**
@@ -44,5 +51,15 @@ class Applicant extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    
+    public function jobApplications(): HasMany
+    {
+        return $this->hasMany(JobApplication::class);
+    }
+    
+    public function savedJobs(): HasMany
+    {
+        return $this->hasMany(SavedJob::class);
     }
 }

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class JobApplication extends Model
 {
     protected $fillable = [
-        'user_id',
+        'applicant_id',
         'job_circular_id',
         'status',
         'cover_letter',
@@ -16,7 +16,7 @@ class JobApplication extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Applicant::class, 'applicant_id');
     }
 
     public function jobCircular()

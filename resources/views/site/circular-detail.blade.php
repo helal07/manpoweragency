@@ -116,11 +116,61 @@
                     </div>
                 </div>
 
-                <div class="pt-4">
+                <div class="pt-4 space-y-3">
                     @auth('web')
-                        <a href="{{ url('/dashboard') }}" class="block w-full py-3.5 text-center font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-md">
-                            Apply via Applicant Portal
-                        </a>
+                        @php
+                            $hasApplied = \App\Models\JobApplication::where('applicant_id', auth()->id())->where('job_circular_id', $circular->id)->exists();
+                            $hasSaved = \App\Models\SavedJob::where('applicant_id', auth()->id())->where('job_circular_id', $circular->id)->exists();
+                        @endphp
+
+                        @if (session('success'))
+                            <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-sm font-semibold">
+                                {{ session('success') }}
+                            </div>
+                        @endif
+                        @if (session('error'))
+                            <div class="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm font-semibold">
+                                {{ session('error') }}
+                            </div>
+                        @endif
+
+                        @if ($hasApplied)
+                            <div class="w-full py-3.5 text-center font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl cursor-default flex justify-center items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Already Applied
+                            </div>
+                        @else
+                            <form action="{{ route('applications.store') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="job_circular_id" value="{{ $circular->id }}">
+                                <button type="submit" class="w-full py-3.5 text-center font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-md">
+                                    Apply Now
+                                </button>
+                            </form>
+                        @endif
+
+                        <div class="pt-2">
+                            @if ($hasSaved)
+                                <form action="{{ route('saved-jobs.destroy') }}" method="POST">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="job_circular_id" value="{{ $circular->id }}">
+                                    <button type="submit" class="w-full py-2.5 text-center font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-colors flex justify-center items-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/></svg>
+                                        Saved
+                                    </button>
+                                </form>
+                            @else
+                                <form action="{{ route('saved-jobs.store') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="job_circular_id" value="{{ $circular->id }}">
+                                    <button type="submit" class="w-full py-2.5 text-center font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-colors flex justify-center items-center gap-2">
+                                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                                        Save Job
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     @else
                         <a href="{{ route('login') }}" class="block w-full py-3.5 text-center font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-md">
                             Login to Apply

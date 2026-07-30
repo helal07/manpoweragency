@@ -30,6 +30,7 @@
                     </label>
                     <input type="file" id="avatar" name="avatar" class="hidden" accept="image/jpeg,image/png,image/webp">
                     <p class="text-xs text-slate-500 mt-2">JPG, PNG up to 2MB</p>
+                    <x-input-error class="mt-2" :messages="$errors->get('avatar')" />
                 </div>
             </div>
 
@@ -45,6 +46,7 @@
                 <div class="flex items-center gap-4">
                     <div class="flex-1">
                         <input type="file" name="resume" accept="application/pdf,.doc,.docx" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors border border-slate-200 rounded-lg">
+                        <x-input-error class="mt-2" :messages="$errors->get('resume')" />
                     </div>
                 </div>
                 
@@ -66,6 +68,11 @@
                 <button type="submit" class="w-full px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-600/20">
                     Save Assets
                 </button>
+                @if (session('status') === 'assets-updated')
+                    <p class="text-sm text-emerald-600 font-semibold mt-2 text-center" x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 3000)">
+                        Saved successfully.
+                    </p>
+                @endif
             </div>
         </form>
     </div>

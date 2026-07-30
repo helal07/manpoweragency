@@ -14,13 +14,13 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        $totalApplications = JobApplication::where('user_id', $user->id)->count();
-        $underReview = JobApplication::where('user_id', $user->id)->whereIn('status', ['reviewed', 'shortlisted'])->count();
-        $upcomingInterviews = JobApplication::where('user_id', $user->id)->where('status', 'interview')->count();
-        $savedJobsCount = SavedJob::where('user_id', $user->id)->count();
+        $totalApplications = JobApplication::where('applicant_id', $user->id)->count();
+        $underReview = JobApplication::where('applicant_id', $user->id)->whereIn('status', ['reviewed', 'shortlisted'])->count();
+        $upcomingInterviews = JobApplication::where('applicant_id', $user->id)->where('status', 'interview')->count();
+        $savedJobsCount = SavedJob::where('applicant_id', $user->id)->count();
         
         $recentApplications = JobApplication::with('jobCircular')
-            ->where('user_id', $user->id)
+            ->where('applicant_id', $user->id)
             ->latest()
             ->take(5)
             ->get();

@@ -24,24 +24,53 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
         $user = $request->user();
         
         // Check if this is an asset update
         if ($request->has('update_assets')) {
+            $request->validate([
+                'avatar' => ['nullable', 'image', 'max:2048'],
+                'resume' => ['nullable', 'mimes:pdf,doc,docx', 'max:5120'],
+            ]);
+
+            $updated = false;
             if ($request->hasFile('avatar')) {
-                $user->addMediaFromRequest('avatar')
-                     ->toMediaCollection('avatar');
+                $user->clearMediaCollection('avatar');
+                $user->addMediaFromRequest('avatar')->toMediaCollection('avatar');
+                $updated = true;
             }
             if ($request->hasFile('resume')) {
-                $user->addMediaFromRequest('resume')
-                     ->toMediaCollection('resume');
+                $user->clearMediaCollection('resume');
+                $user->addMediaFromRequest('resume')->toMediaCollection('resume');
+                $updated = true;
             }
-            return Redirect::route('profile.edit')->with('status', 'profile-updated');
+            
+            if (!$updated) {
+                return Redirect::back()->withErrors(['avatar' => 'Please select a valid file to upload. Ensure it is under the size limit.']);
+            }
+            return Redirect::route('profile.edit')->with('status', 'assets-updated');
         }
 
-        $user->fill($request->validated());
+        // Validate profile info
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                \Illuminate\Validation\Rule::unique(get_class($user))->ignore($user->id),
+            ],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'current_address' => ['nullable', 'string'],
+            'permanent_address' => ['nullable', 'string'],
+            'linkedin_url' => ['nullable', 'url', 'max:255'],
+        ]);
+
+        $user->fill($validated);
         
         // Add new profile fields
         $user->phone = $request->input('phone');
