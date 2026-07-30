@@ -26,13 +26,34 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
-
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user = $request->user();
+        
+        // Check if this is an asset update
+        if ($request->has('update_assets')) {
+            if ($request->hasFile('avatar')) {
+                $user->addMediaFromRequest('avatar')
+                     ->toMediaCollection('avatar');
+            }
+            if ($request->hasFile('resume')) {
+                $user->addMediaFromRequest('resume')
+                     ->toMediaCollection('resume');
+            }
+            return Redirect::route('profile.edit')->with('status', 'profile-updated');
         }
 
-        $request->user()->save();
+        $user->fill($request->validated());
+        
+        // Add new profile fields
+        $user->phone = $request->input('phone');
+        $user->current_address = $request->input('current_address');
+        $user->permanent_address = $request->input('permanent_address');
+        $user->linkedin_url = $request->input('linkedin_url');
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
