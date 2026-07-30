@@ -11,8 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('phone')->nullable();
+        Schema::table('applicants', function (Blueprint $table) {
             $table->text('current_address')->nullable();
             $table->text('permanent_address')->nullable();
             $table->string('linkedin_url')->nullable();
@@ -25,8 +24,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['phone', 'current_address', 'permanent_address', 'linkedin_url', 'resume_path']);
+        Schema::table('applicants', function (Blueprint $table) {
+            $table->dropColumn(['current_address', 'permanent_address', 'linkedin_url', 'resume_path']);
         });
     }
 };
