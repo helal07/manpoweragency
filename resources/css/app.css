@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* WEBSITE BRAND SYSTEM: DEEP BLUE THEME rgb(26,58,82) */
+  
+  /* 1. Primary Brand Color */
+  --color-brand-primary: rgb(26, 58, 82);
+  --color-brand-dark: rgb(15, 38, 56);
+  --color-off-white: #F8FAFC;
+  --color-pure-white: #FFFFFF;
+
+  /* 2. Brand Trust & Neutral */
+  --color-navy-dark: rgb(26, 58, 82);
+  --color-slate-blue: #1E3A8A;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+
+  /* 3. Conversion Accent */
+  --color-amber-gold: #F59E0B;
+  --color-gold-hover: #D97706;
+
+  /* 4. Utility */
+  --color-success: #10B981;
+  --color-border: #E2E8F0;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--color-off-white);
+  color: var(--color-navy-dark);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.bg-brand-primary {
+  background-color: rgb(26, 58, 82) !important;
+}
+
+.text-brand-primary {
+  color: rgb(26, 58, 82) !important;
+}
+
+.border-brand-primary {
+  border-color: rgb(26, 58, 82) !important;
+}

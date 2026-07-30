@@ -1,0 +1,152 @@
+@extends('layouts.applicant')
+
+@section('title', 'Overview')
+@section('header_title', 'Dashboard Overview')
+
+@section('content')
+<div class="space-y-6">
+    <!-- Welcome Banner -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-5">
+            <div class="w-16 h-16 rounded-full bg-blue-100 border-2 border-blue-200 flex items-center justify-center text-blue-700 font-bold text-2xl overflow-hidden shrink-0">
+                @if(auth()->user()->getFirstMediaUrl('avatar'))
+                    <img src="{{ auth()->user()->getFirstMediaUrl('avatar') }}" class="w-full h-full object-cover" alt="Avatar">
+                @else
+                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                @endif
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800">Welcome back, {{ auth()->user()->name }}!</h2>
+                <p class="text-slate-500 text-sm mt-1">Here is what's happening with your job applications today.</p>
+            </div>
+        </div>
+        
+        <!-- Profile Completion -->
+        <div class="w-full md:w-64 bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <div class="flex justify-between items-end mb-2">
+                <span class="text-sm font-semibold text-slate-700">Profile Completion</span>
+                <span class="text-xs font-bold text-blue-600">
+                    @php
+                        $completion = 20;
+                        if(auth()->user()->phone) $completion += 20;
+                        if(auth()->user()->current_address) $completion += 20;
+                        if(auth()->user()->resume_path || auth()->user()->getFirstMediaUrl('resume')) $completion += 40;
+                    @endphp
+                    {{ $completion }}%
+                </span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2">
+                <div class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: {{ $completion }}%"></div>
+            </div>
+            @if($completion < 100)
+                <a href="{{ route('profile.edit') }}" class="text-xs text-blue-600 hover:underline mt-2 inline-block">Complete your profile &rarr;</a>
+            @endif
+        </div>
+    </div>
+
+    <!-- Quick Stats Widgets -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Applied</div>
+                <div class="text-2xl font-bold text-slate-800 mt-1">{{ $totalApplications ?? 0 }}</div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Under Review</div>
+                <div class="text-2xl font-bold text-slate-800 mt-1">{{ $underReview ?? 0 }}</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Interviews</div>
+                <div class="text-2xl font-bold text-slate-800 mt-1">{{ $upcomingInterviews ?? 0 }}</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            </div>
+            <div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Saved Jobs</div>
+                <div class="text-2xl font-bold text-slate-800 mt-1">{{ $savedJobsCount ?? 0 }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Applications -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-slate-800">Recent Applications</h3>
+            <a href="{{ route('applications.index') }}" class="text-sm font-semibold text-blue-600 hover:text-blue-700">View All</a>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                        <th class="px-6 py-3 font-semibold">Job Role</th>
+                        <th class="px-6 py-3 font-semibold">Applied On</th>
+                        <th class="px-6 py-3 font-semibold">Status</th>
+                        <th class="px-6 py-3 font-semibold text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    @forelse($recentApplications ?? [] as $app)
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="font-semibold text-slate-800">{{ $app->jobCircular->title }}</div>
+                            <div class="text-slate-500 text-xs">{{ $app->jobCircular->employer_name ?? 'Confidential' }}</div>
+                        </td>
+                        <td class="px-6 py-4 text-slate-600">
+                            {{ $app->created_at->format('M d, Y') }}
+                        </td>
+                        <td class="px-6 py-4">
+                            @if($app->status === 'pending')
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Pending</span>
+                            @elseif($app->status === 'reviewed')
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Reviewed</span>
+                            @elseif($app->status === 'shortlisted')
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Shortlisted</span>
+                            @elseif($app->status === 'interview')
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Interview Scheduled</span>
+                            @elseif($app->status === 'accepted')
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-100 text-teal-800">Accepted</span>
+                            @elseif($app->status === 'rejected')
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800">Rejected</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{{ route('applications.show', $app->id) }}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">View Details</a>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="4" class="px-6 py-10 text-center text-slate-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                                <p>You haven't applied to any jobs yet.</p>
+                                <a href="{{ route('circulars.index') }}" class="mt-2 text-blue-600 font-medium hover:underline">Browse Jobs</a>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@endsection
