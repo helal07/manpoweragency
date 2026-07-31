@@ -1,23 +1,23 @@
 ---
 deployment:
   tasks:
-    # 1. Set DEPLOYPATH to the root directory of your subdomain.
-    # IMPORTANT: Replace "YOUR_CPANEL_USERNAME" with your actual cPanel username.
+    # ১. ডিপ্লয়মেন্ট পাথ ডিফাইন করা
     - export DEPLOYPATH=/home/panaroma/shitalakshyafoundation.com
-    
-    # 2. Copy all files from the git repository to the deployment directory
-    # Using -a to ensure hidden files like .htaccess are also copied
-    - /bin/cp -a . $DEPLOYPATH
-    
-    # 3. Run Composer to install dependencies
-    # (assuming composer is available globally as 'composer')
+
+    # ২. নিশ্চিত করা যেন টার্গেট ডিরেক্টরি থাকে
+    - mkdir -p $DEPLOYPATH
+
+    # ৩. শুধুমাত্র প্রয়োজনীয় ফাইল কপি করা (.git ফোল্ডার বাদ দিয়ে)
+    - /usr/bin/rsync -av --exclude='.git' . $DEPLOYPATH
+
+    # ৪. কম্পোজার ডিপেনডেন্সি ইনস্টল করা
     - cd $DEPLOYPATH && composer install --no-dev --optimize-autoloader
-    
-    # 4. Clear and cache config/routes/views for performance
+
+    # ৫. লারাভেল ক্যাশ ক্লিয়ার ও অপটিমাইজ করা
     - cd $DEPLOYPATH && php artisan optimize:clear
     - cd $DEPLOYPATH && php artisan config:cache
     - cd $DEPLOYPATH && php artisan route:cache
     - cd $DEPLOYPATH && php artisan view:cache
-    
-    # 5. Run database migrations (make sure your .env is set up on the server!)
+
+    # ৬. ডাটাবেস মাইগ্রেশন (force ফ্ল্যাগ সহ)
     - cd $DEPLOYPATH && php artisan migrate --force
