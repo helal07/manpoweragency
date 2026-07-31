@@ -72,7 +72,7 @@
             <p>{{ $siteSettings['footer_copyright'] ?? '© 2026 Global Manpower Overseas Ltd. All Rights Reserved.' }}</p>
             
             <div class="flex items-center space-x-4 border border-white/10 px-4 py-2 rounded-lg bg-white/5">
-                <span>Powered by <a href="http://www.itsolution.bd" target="_blank" class="text-white hover:text-[#F59E0B] font-bold transition-colors">IT Solution</a></span>
+                <span>Developed By: <a href="http://www.itsolution.bd" target="_blank" class="text-white hover:text-[#F59E0B] font-bold transition-colors">IT Solution</a></span>
                 <span class="text-white/30">|</span>
                 <span>Contact: +8801682000977</span>
                 <span class="text-white/30">|</span>

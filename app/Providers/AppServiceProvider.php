@@ -22,58 +22,44 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        View::composer('*', function ($view) {
-            $settingsData = [];
-
-            if (Schema::hasTable('app_settings')) {
-                try {
-                    $siteSettings = app(SiteSettings::class);
-                    $settingsData = [
-                        'site_name' => $siteSettings->site_name ?? 'Global Manpower Overseas Ltd.',
-                        'site_tagline' => $siteSettings->site_tagline ?? 'Connecting Skilled Talent with Global Opportunities',
-                        'company_phone' => $siteSettings->phone ?? '+880 2-9876543',
-                        'company_email' => $siteSettings->email ?? 'info@globalmanpower.com',
-                        'company_address' => $siteSettings->address ?? 'House 42, Road 11, Block D, Banani, Dhaka-1213, Bangladesh',
-                        'bmet_license_no' => $siteSettings->bmet_license_no ?? 'RL-1452 (Ministry of Expatriates\' Welfare & Overseas Employment)',
-                        'show_bmet_license' => $siteSettings->show_bmet_license ?? true,
-                        'footer_copyright' => $siteSettings->footer_copyright ?? '© 2026 Global Manpower Overseas Ltd. All Rights Reserved.',
-                        'facebook_url' => $siteSettings->facebook_url ?? 'https://facebook.com',
-                        'linkedin_url' => $siteSettings->linkedin_url ?? 'https://linkedin.com',
-                        'twitter_url' => $siteSettings->twitter_url ?? 'https://twitter.com',
-                        'about_teaser' => $siteSettings->about_teaser ?? 'Global Manpower Overseas Ltd. is a premier government-licensed overseas recruitment agency in Bangladesh (RL-1452).',
-                        'logo_url' => $siteSettings->logo_path ? asset('storage/' . $siteSettings->logo_path) : null,
-                        'favicon_url' => $siteSettings->favicon_path ? asset('storage/' . $siteSettings->favicon_path) : null,
+        // Only load settings for front-end views and the footer, ignoring Livewire backend entirely
+        View::composer([
+            'site.*', 
+            'layouts.*', 
+            'partials.*', 
+            'applicant.*', 
+            'filament.footer'
+        ], function ($view) {
+            $settingsData = \Illuminate\Support\Facades\Cache::remember('site_settings_global_cache', 3600, function () {
+                if (\Illuminate\Support\Facades\Schema::hasTable('app_settings')) {
+                    $siteSettings = app(\App\Settings\SiteSettings::class);
+                    return [
+                        'site_name' => $siteSettings->site_name ?? 'Laravel',
+                        'site_tagline' => $siteSettings->site_tagline ?? '',
+                        'company_phone' => $siteSettings->phone ?? '',
+                        'company_email' => $siteSettings->email ?? '',
+                        'company_address' => $siteSettings->address ?? '',
+                        'bmet_license_no' => $siteSettings->bmet_license_no ?? '',
+                        'show_bmet_license' => $siteSettings->show_bmet_license ?? false,
+                        'footer_copyright' => $siteSettings->footer_copyright ?? '',
+                        'facebook_url' => $siteSettings->facebook_url ?? '',
+                        'linkedin_url' => $siteSettings->linkedin_url ?? '',
+                        'twitter_url' => $siteSettings->twitter_url ?? '',
+                        'about_teaser' => $siteSettings->about_teaser ?? '',
+                        'logo_url' => $siteSettings->logo_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($siteSettings->logo_path) : null,
+                        'favicon_url' => $siteSettings->favicon_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($siteSettings->favicon_path) : null,
 
                         'nav_home_label' => $siteSettings->nav_home_label ?? 'Home',
                         'nav_about_label' => $siteSettings->nav_about_label ?? 'About',
                         'nav_clients_label' => $siteSettings->nav_clients_label ?? 'Clients',
                         'nav_services_label' => $siteSettings->nav_services_label ?? 'Services',
-                        'nav_circulars_label' => $siteSettings->nav_circulars_label ?? 'Job Circular',
-                        'nav_notices_label' => $siteSettings->nav_notices_label ?? 'Notice',
-                        'nav_login_label' => $siteSettings->nav_login_label ?? 'Applicant Login',
-                    ];
-                } catch (\Throwable $e) {
-                    // Fallback default values
-                    $settingsData = [
-                        'site_name' => 'Global Manpower Overseas Ltd.',
-                        'site_tagline' => 'Connecting Skilled Talent with Global Opportunities',
-                        'company_phone' => '+880 2-9876543',
-                        'company_email' => 'info@globalmanpower.com',
-                        'company_address' => 'House 42, Road 11, Block D, Banani, Dhaka-1213, Bangladesh',
-                        'bmet_license_no' => 'RL-1452 (Ministry of Expatriates\' Welfare & Overseas Employment)',
-                        'show_bmet_license' => true,
-                        'footer_copyright' => '© 2026 Global Manpower Overseas Ltd. All Rights Reserved.',
-
-                        'nav_home_label' => 'Home',
-                        'nav_about_label' => 'About',
-                        'nav_clients_label' => 'Clients',
-                        'nav_services_label' => 'Services',
-                        'nav_circulars_label' => 'Job Circular',
-                        'nav_notices_label' => 'Notice',
-                        'nav_login_label' => 'Applicant Login',
+                        'nav_circulars_label' => $siteSettings->nav_circulars_label ?? 'Job Circulars',
+                        'nav_notices_label' => $siteSettings->nav_notices_label ?? 'Notices',
+                        'nav_login_label' => $siteSettings->nav_login_label ?? 'Login',
                     ];
                 }
-            }
+                return [];
+            });
 
             $view->with('siteSettings', $settingsData);
         });

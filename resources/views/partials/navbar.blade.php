@@ -4,6 +4,9 @@
         .mobile-hamburger-toggle {
             display: none !important;
         }
+        .mobile-menu-container {
+            display: none !important;
+        }
         .desktop-nav-menu {
             display: flex !important;
         }
@@ -136,7 +139,7 @@
          x-transition:leave="transition ease-in duration-150" 
          x-transition:leave-start="opacity-100 translate-y-0" 
          x-transition:leave-end="opacity-0 -translate-y-2" 
-         class="mobile-hamburger-toggle flex-col px-4 pt-3 pb-6 space-y-3 shadow-2xl"
+         class="mobile-menu-container flex flex-col px-4 pt-3 pb-6 space-y-3 shadow-2xl absolute w-full left-0 top-full"
          style="background-color: rgb(26, 58, 82) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;">
         
         <div class="space-y-1 w-full">

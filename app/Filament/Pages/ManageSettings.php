@@ -192,6 +192,8 @@ class ManageSettings extends Page implements HasForms
 
         $settings->save();
 
+        \Illuminate\Support\Facades\Cache::forget('site_settings_global_cache');
+
         Notification::make()
             ->title('Site Settings Saved Successfully')
             ->success()

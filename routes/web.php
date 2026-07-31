@@ -8,6 +8,17 @@ use App\Models\Leader;
 use App\Models\Notice;
 use App\Models\Service;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
+
+// Temp route to optimize live server for maximum speed
+Route::get('/optimize', function () {
+    Artisan::call('optimize:clear');
+    Artisan::call('config:cache');
+    Artisan::call('route:cache');
+    Artisan::call('view:cache');
+    Artisan::call('filament:optimize');
+    return 'Production optimization complete! Your live site is now fully cached and blazing fast. You can go back now.';
+});
 
 // Public Site Routes
 Route::get('/', function () {
