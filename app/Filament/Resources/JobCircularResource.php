@@ -87,28 +87,51 @@ class JobCircularResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('country')->sortable(),
-                Tables\Columns\TextColumn::make('category')->sortable(),
-                Tables\Columns\TextColumn::make('vacancy')->sortable(),
-                Tables\Columns\TextColumn::make('salary_range'),
-                Tables\Columns\BadgeColumn::make('computed_status')
+                Tables\Columns\TextColumn::make('title')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->wrap(),
+                Tables\Columns\TextColumn::make('country')
+                    ->badge()
+                    ->color('info')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('category')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('vacancy')
+                    ->sortable()
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('salary_range')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('computed_status')
                     ->label('Status')
+                    ->badge()
                     ->getStateUsing(fn ($record) => ($record->deadline && $record->deadline->isFuture()) || $record->status === 'open' ? 'Open' : 'Closed')
-                    ->colors([
-                        'success' => 'Open',
-                        'danger' => 'Closed',
-                    ]),
-                Tables\Columns\TextColumn::make('deadline')->date(),
+                    ->color(fn (string $state): string => match ($state) {
+                        'Open' => 'success',
+                        'Closed' => 'danger',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('deadline')
+                    ->date('M d, Y')
+                    ->sortable(),
             ])
-            ->filters([])
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'open' => 'Open',
+                        'closed' => 'Closed',
+                    ]),
+            ])
             ->actions([
                 Actions\EditAction::make(),
                 Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Actions\DeleteBulkAction::make(),
-            ]);
+            ])
+            ->striped()
+            ->defaultPaginationPageOption(25);
     }
 
     public static function getPages(): array

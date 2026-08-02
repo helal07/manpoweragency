@@ -75,10 +75,22 @@ class NoticeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('category')->sortable(),
-                Tables\Columns\IconColumn::make('is_pinned')->boolean(),
-                Tables\Columns\TextColumn::make('published_at')->date()->sortable(),
+                Tables\Columns\TextColumn::make('title')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->wrap(),
+                Tables\Columns\TextColumn::make('category')
+                    ->badge()
+                    ->color('gray')
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('is_pinned')
+                    ->boolean()
+                    ->label('Pinned')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('published_at')
+                    ->date('M d, Y')
+                    ->sortable(),
             ])
             ->filters([])
             ->actions([
@@ -87,7 +99,9 @@ class NoticeResource extends Resource
             ])
             ->bulkActions([
                 Actions\DeleteBulkAction::make(),
-            ]);
+            ])
+            ->striped()
+            ->defaultPaginationPageOption(25);
     }
 
     public static function getPages(): array
