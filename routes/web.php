@@ -11,17 +11,40 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 
-// Route to optimize live server and establish storage symlink
+// Route to optimize live server, fix storage permissions, and establish symlink
 Route::get('/optimize', function () {
+    $storagePublic = storage_path('app/public');
+    if (is_dir($storagePublic)) {
+        @chmod(storage_path(), 0755);
+        @chmod(storage_path('app'), 0755);
+        @chmod($storagePublic, 0755);
+
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($storagePublic, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::SELF_FIRST
+            );
+            foreach ($iterator as $item) {
+                if ($item->isDir()) {
+                    @chmod($item->getPathname(), 0755);
+                } else {
+                    @chmod($item->getPathname(), 0644);
+                }
+            }
+        } catch (\Throwable $e) {}
+    }
+
     try {
         Artisan::call('storage:link');
     } catch (\Throwable $e) {}
+
     Artisan::call('optimize:clear');
+    \Illuminate\Support\Facades\Cache::forget('site_settings_global_cache');
     Artisan::call('config:cache');
     Artisan::call('route:cache');
     Artisan::call('view:cache');
-    Artisan::call('filament:optimize');
-    return 'Production optimization complete! Storage link verified and live site is fully cached.';
+    
+    return 'Production optimization complete! Storage permissions (0755/0644) fixed, symlink verified, and live site is fully cached.';
 });
 
 // Storage fallback route for shared hosts where Apache symlinks might be restricted or pending

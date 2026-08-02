@@ -12,7 +12,10 @@ deployment:
 
     # 4. Create storage symlink & set correct permissions
     - cd $DEPLOYPATH && php artisan storage:link || true
+    - cd $DEPLOYPATH && chmod 755 storage storage/app storage/app/public || true
     - cd $DEPLOYPATH && chmod -R 775 storage bootstrap/cache || true
+    - cd $DEPLOYPATH && find storage/app/public -type d -exec chmod 755 {} + || true
+    - cd $DEPLOYPATH && find storage/app/public -type f -exec chmod 644 {} + || true
 
     # 5. Clear and rebuild Laravel production cache
     - cd $DEPLOYPATH && php artisan optimize:clear || true
