@@ -1,27 +1,27 @@
 ---
 deployment:
   tasks:
-    # ১. ডিপ্লয়মেন্ট পাথ ডিফাইন করা
+    # 1. Define deployment target path
     - export DEPLOYPATH=/home/panaroma/shitalakshyafoundation.com
 
-    # ২. নিশ্চিত করা যেন টার্গেট ডিরেক্টরি থাকে
+    # 2. Ensure target directory exists
     - mkdir -p $DEPLOYPATH
 
-    # ৩. শুধুমাত্র প্রয়োজনীয় ফাইল কপি করা (.git ফোল্ডার বাদ দিয়ে)
+    # 3. Sync all project files (including .htaccess, excluding .git)
     - /usr/bin/rsync -av --exclude='.git' . $DEPLOYPATH
 
-    # ৪. কম্পোজার ডিপেনডেন্সি ইনস্টল করা
+    # 4. Install Composer dependencies
     - cd $DEPLOYPATH && composer install --no-dev --optimize-autoloader
 
-    # ৫. স্টোরেজ লিংক ও পারমিশন নিশ্চিত করা
+    # 5. Create storage symlink & set correct permissions
     - cd $DEPLOYPATH && php artisan storage:link || true
     - cd $DEPLOYPATH && chmod -R 775 storage bootstrap/cache || true
 
-    # ৬. লারাভেল ক্যাশ ক্লিয়ার ও অপটিমাইজ করা
+    # 6. Clear and rebuild Laravel production cache
     - cd $DEPLOYPATH && php artisan optimize:clear
     - cd $DEPLOYPATH && php artisan config:cache
     - cd $DEPLOYPATH && php artisan route:cache
     - cd $DEPLOYPATH && php artisan view:cache
 
-    # ৭. ডাটাবেস মাইগ্রেশন (force ফ্ল্যাগ সহ)
+    # 7. Run database migrations safely
     - cd $DEPLOYPATH && php artisan migrate --force
