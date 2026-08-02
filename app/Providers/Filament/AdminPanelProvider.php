@@ -54,6 +54,8 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->passwordReset()
+            ->profile(\App\Filament\Pages\Auth\EditProfile::class, isSimple: false)
             ->authGuard('admin')
             ->brandName($siteName)
             ->brandLogo($logoUrl)
