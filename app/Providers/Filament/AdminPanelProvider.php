@@ -14,7 +14,6 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Support\Enums\MaxWidth;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -56,7 +55,6 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->authGuard('admin')
-            ->maxContentWidth(MaxWidth::Full)
             ->brandName($siteName)
             ->brandLogo($logoUrl)
             ->brandLogoHeight('2.85rem')
@@ -230,6 +228,21 @@ class AdminPanelProvider extends PanelProvider
                             border-radius: 1.5rem !important;
                             box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.45) !important;
                             backdrop-filter: blur(16px) !important;
+                        }
+
+                        /* Full Width Layout & Table Expansion */
+                        .fi-main-ctn,
+                        .fi-page,
+                        .fi-page > div,
+                        .fi-ta-ctn,
+                        .fi-ta-content {
+                            max-width: 100% !important;
+                            width: 100% !important;
+                        }
+
+                        .fi-ta-table {
+                            width: 100% !important;
+                            table-layout: auto !important;
                         }
                     </style>
                 ')
