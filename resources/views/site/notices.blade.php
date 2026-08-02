@@ -70,7 +70,7 @@
                                     <a href="{{ $attachment->getUrl() }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors">
                                         <svg class="w-5 h-5 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
                                         {{ $attachment->file_name }}
-                                        <span class="text-[10px] text-slate-400 uppercase ml-1">({{ strtoupper($attachment->getExtensionAttribute()) }})</span>
+                                        <span class="text-[10px] text-slate-400 uppercase ml-1">({{ strtoupper(pathinfo($attachment->file_name, PATHINFO_EXTENSION)) }})</span>
                                     </a>
                                 @endif
                             @endforeach

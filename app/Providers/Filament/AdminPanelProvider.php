@@ -32,8 +32,8 @@ class AdminPanelProvider extends PanelProvider
         $logoUrl = null;
         $faviconUrl = null;
 
-        if (Schema::hasTable('app_settings')) {
-            try {
+        try {
+            if (Schema::hasTable('app_settings')) {
                 $siteSettings = app(SiteSettings::class);
                 if (!empty($siteSettings->site_name)) {
                     $siteName = $siteSettings->site_name;
@@ -44,9 +44,9 @@ class AdminPanelProvider extends PanelProvider
                 if (!empty($siteSettings->favicon_path)) {
                     $faviconUrl = asset('storage/' . $siteSettings->favicon_path);
                 }
-            } catch (\Throwable $e) {
-                // Fallback default
             }
+        } catch (\Throwable $e) {
+            // Fallback default branding gracefully if database is not reachable during CLI commands
         }
 
         return $panel
@@ -57,10 +57,16 @@ class AdminPanelProvider extends PanelProvider
             ->authGuard('admin')
             ->brandName($siteName)
             ->brandLogo($logoUrl)
+            ->brandLogoHeight('2.85rem')
             ->favicon($faviconUrl)
             ->colors([
                 'primary' => Color::Amber,
+                'gray' => Color::Slate,
             ])
+            ->renderHook(
+                PanelsRenderHook::USER_MENU_BEFORE,
+                fn () => view('filament.topbar-actions')
+            )
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): string => Blade::render('
@@ -68,73 +74,154 @@ class AdminPanelProvider extends PanelProvider
                     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
                     <style>
-                        body.fi-body-simple, .fi-simple-layout {
+                        :root {
+                            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                        }
+
+                        * {
                             font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-                            -webkit-font-smoothing: antialiased !important;
-                            -moz-osx-font-smoothing: grayscale !important;
-                            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.35), rgba(15, 23, 42, 0.45)), url("/images/airplane_bg.png") no-repeat center center fixed !important;
+                        }
+
+                        /* Modern Executive Topbar Navigation */
+                        .fi-topbar {
+                            background: rgba(255, 255, 255, 0.92) !important;
+                            backdrop-filter: blur(16px) !important;
+                            border-bottom: 1px solid rgba(226, 232, 240, 0.9) !important;
+                            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04) !important;
+                            transition: all 0.2s ease-in-out !important;
+                        }
+
+                        .dark .fi-topbar {
+                            background: rgba(15, 23, 42, 0.92) !important;
+                            backdrop-filter: blur(16px) !important;
+                            border-bottom: 1px solid rgba(245, 158, 11, 0.15) !important;
+                            box-shadow: 0 4px 25px -2px rgba(0, 0, 0, 0.35) !important;
+                        }
+
+                        /* Modern Sidebar Aesthetic */
+                        .fi-sidebar {
+                            background: linear-gradient(180deg, #0b1329 0%, #0f172a 100%) !important;
+                            border-right: 1px solid rgba(30, 41, 59, 0.8) !important;
+                            box-shadow: 4px 0 24px 0 rgba(0, 0, 0, 0.18) !important;
+                        }
+
+                        .fi-sidebar-header {
+                            background: rgba(11, 19, 41, 0.7) !important;
+                            border-bottom: 1px solid rgba(245, 158, 11, 0.15) !important;
+                            padding: 1rem !important;
+                        }
+
+                        /* Dual-Tone Brand Logo & Text */
+                        .fi-logo, .fi-sidebar-header .fi-brand {
+                            font-size: 1.35rem !important;
+                            font-weight: 800 !important;
+                            background: linear-gradient(135deg, #ffffff 0%, #f59e0b 85%) !important;
+                            -webkit-background-clip: text !important;
+                            -webkit-text-fill-color: transparent !important;
+                            letter-spacing: -0.02em !important;
+                        }
+
+                        /* Sidebar Navigation Group Labels */
+                        .fi-sidebar-group-label span {
+                            color: #94a3b8 !important;
+                            font-size: 0.68rem !important;
+                            font-weight: 800 !important;
+                            text-transform: uppercase !important;
+                            letter-spacing: 0.12em !important;
+                        }
+
+                        /* Navigation Items */
+                        .fi-sidebar-item-button {
+                            border-radius: 0.75rem !important;
+                            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                            margin: 0.15rem 0.5rem !important;
+                            padding: 0.55rem 0.85rem !important;
+                            color: #94a3b8 !important;
+                        }
+
+                        .fi-sidebar-item-button:hover {
+                            background: rgba(255, 255, 255, 0.08) !important;
+                            color: #ffffff !important;
+                            transform: translateX(3px) !important;
+                        }
+
+                        /* Active Navigation Item Glow */
+                        .fi-sidebar-item-active .fi-sidebar-item-button {
+                            background: linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(30, 58, 138, 0.35) 100%) !important;
+                            border-left: 3.5px solid #f59e0b !important;
+                            color: #fbbf24 !important;
+                            font-weight: 700 !important;
+                            box-shadow: 0 4px 16px -2px rgba(245, 158, 11, 0.2) !important;
+                        }
+
+                        .fi-sidebar-item-active .fi-sidebar-item-button svg {
+                            color: #f59e0b !important;
+                            filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)) !important;
+                        }
+
+                        /* Elevated Stats Cards */
+                        .fi-wi-stats-overview-stat {
+                            border-radius: 1rem !important;
+                            border: 1px solid rgba(226, 232, 240, 0.8) !important;
+                            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05) !important;
+                            transition: all 0.2s ease !important;
+                        }
+
+                        .fi-wi-stats-overview-stat:hover {
+                            transform: translateY(-2px) !important;
+                            box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.1) !important;
+                        }
+
+                        .dark .fi-wi-stats-overview-stat {
+                            background: #0f172a !important;
+                            border: 1px solid rgba(30, 41, 59, 0.9) !important;
+                        }
+
+                        /* Modern Tables */
+                        .fi-ta-ctn {
+                            border-radius: 1rem !important;
+                            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04) !important;
+                            border: 1px solid rgba(226, 232, 240, 0.8) !important;
+                            overflow: hidden !important;
+                        }
+
+                        .dark .fi-ta-ctn {
+                            background: #0f172a !important;
+                            border: 1px solid rgba(30, 41, 59, 0.9) !important;
+                        }
+
+                        /* Sleek Buttons */
+                        .fi-btn {
+                            border-radius: 0.65rem !important;
+                            font-weight: 700 !important;
+                            letter-spacing: 0.01em !important;
+                            transition: all 0.15s ease !important;
+                        }
+
+                        .fi-btn-primary {
+                            background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+                            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3) !important;
+                        }
+
+                        .fi-btn-primary:hover {
+                            background: linear-gradient(135deg, #b45309 0%, #92400e 100%) !important;
+                            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.4) !important;
+                            transform: translateY(-1px) !important;
+                        }
+
+                        /* Login Page Theme */
+                        body.fi-body-simple, .fi-simple-layout {
+                            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.55)), url("/images/airplane_bg.png") no-repeat center center fixed !important;
                             background-size: cover !important;
                             min-height: 100vh !important;
-                            width: 100% !important;
                         }
+
                         .fi-simple-main, .fi-simple-main-ctn, div.fi-simple-main-ctn {
-                            background-color: rgba(255, 255, 255, 0.96) !important;
+                            background-color: rgba(255, 255, 255, 0.97) !important;
                             border: 1px solid rgba(255, 255, 255, 0.9) !important;
                             border-radius: 1.5rem !important;
                             box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.45) !important;
                             backdrop-filter: blur(16px) !important;
-                        }
-
-                        /* Navy Blue & Gold Header Brand Name (Top Header & Sidebar) */
-                        .fi-logo, .fi-brand, .fi-sidebar-header span, .fi-simple-header div, .fi-simple-header a, .fi-simple-header {
-                            font-size: 1.5rem !important;
-                            font-weight: 800 !important;
-                            color: #b45309 !important;
-                            background: linear-gradient(135deg, #1e3a8a 0%, #d97706 60%, #f59e0b 100%) !important;
-                            -webkit-background-clip: text !important;
-                            -webkit-text-fill-color: transparent !important;
-                            letter-spacing: -0.02em !important;
-                            filter: drop-shadow(0px 2px 4px rgba(15, 23, 42, 0.5)) !important;
-                        }
-
-                        .fi-simple-header-heading, .fi-header-heading, h1, h2 {
-                            color: #0f172a !important;
-                            font-weight: 800 !important;
-                            letter-spacing: -0.02em !important;
-                        }
-                        .fi-simple-header-subheading, p {
-                            color: #475569 !important;
-                        }
-                        label, label span {
-                            color: #1e293b !important;
-                            font-weight: 600 !important;
-                        }
-                        input[type="email"], input[type="password"] {
-                            background-color: #ffffff !important;
-                            color: #0f172a !important;
-                            border: 1px solid #cbd5e1 !important;
-                            border-radius: 0.75rem !important;
-                            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-                        }
-                        input[type="email"]:focus, input[type="password"]:focus {
-                            border-color: #d97706 !important;
-                            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2) !important;
-                        }
-                        button[type="submit"] {
-                            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%) !important;
-                            color: #f59e0b !important;
-                            border: 1px solid #d97706 !important;
-                            border-radius: 0.75rem !important;
-                            font-weight: 800 !important;
-                            letter-spacing: 0.02em !important;
-                            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.3) !important;
-                        }
-                        button[type="submit"]:hover {
-                            background: linear-gradient(135deg, #0f172a 0%, #020617 100%) !important;
-                            color: #fbbf24 !important;
-                        }
-                        svg {
-                            max-width: 100%;
                         }
                     </style>
                 ')

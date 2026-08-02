@@ -80,7 +80,7 @@
                                     <svg class="w-8 h-8 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
                                     <div>
                                         <span class="text-sm font-semibold text-slate-700 group-hover:text-blue-700">{{ $attachment->file_name }}</span>
-                                        <span class="block text-[11px] text-slate-400 mt-0.5">{{ strtoupper($attachment->getExtensionAttribute()) }} Document · {{ number_format($attachment->size / 1024, 1) }} KB — Click to view / download</span>
+                                        <span class="block text-[11px] text-slate-400 mt-0.5">{{ strtoupper(pathinfo($attachment->file_name, PATHINFO_EXTENSION)) }} Document · {{ number_format($attachment->size / 1024, 1) }} KB — Click to view / download</span>
                                     </div>
                                 </a>
                             @endif
