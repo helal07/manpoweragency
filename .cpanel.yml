@@ -7,8 +7,8 @@ deployment:
     # 2. Ensure target directory exists
     - mkdir -p $DEPLOYPATH
 
-    # 3. Sync project files (preserves live .env, vendor, and user uploads)
-    - /usr/bin/rsync -av --exclude='.git' --exclude='.env' --exclude='storage/app/public' --exclude='vendor' . $DEPLOYPATH
+    # 3. Sync all project files (preserves live .env and user uploads)
+    - /usr/bin/rsync -av --exclude='.git' --exclude='.env' --exclude='storage/app/public' . $DEPLOYPATH
 
     # 4. Create storage symlink & set correct permissions
     - cd $DEPLOYPATH && php artisan storage:link || true
