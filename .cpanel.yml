@@ -7,21 +7,19 @@ deployment:
     # 2. Ensure target directory exists
     - mkdir -p $DEPLOYPATH
 
-    # 3. Sync all project files (including .htaccess, excluding .git)
-    - /usr/bin/rsync -av --exclude='.git' . $DEPLOYPATH
+    # 3. Sync project files (preserves live .env, vendor, and user uploads)
+    - /usr/bin/rsync -av --exclude='.git' --exclude='.env' --exclude='storage/app/public' --exclude='vendor' . $DEPLOYPATH
 
-    # 4. Install Composer dependencies
-    - cd $DEPLOYPATH && composer install --no-dev --optimize-autoloader
-
-    # 5. Create storage symlink & set correct permissions
+    # 4. Create storage symlink & set correct permissions
     - cd $DEPLOYPATH && php artisan storage:link || true
     - cd $DEPLOYPATH && chmod -R 775 storage bootstrap/cache || true
 
-    # 6. Clear and rebuild Laravel production cache
-    - cd $DEPLOYPATH && php artisan optimize:clear
-    - cd $DEPLOYPATH && php artisan config:cache
-    - cd $DEPLOYPATH && php artisan route:cache
-    - cd $DEPLOYPATH && php artisan view:cache
+    # 5. Clear and rebuild Laravel production cache
+    - cd $DEPLOYPATH && php artisan optimize:clear || true
+    - cd $DEPLOYPATH && php artisan config:cache || true
+    - cd $DEPLOYPATH && php artisan route:cache || true
+    - cd $DEPLOYPATH && php artisan view:cache || true
 
-    # 7. Run database migrations safely
-    - cd $DEPLOYPATH && php artisan migrate --force
+    # 6. Run database migrations safely
+    - cd $DEPLOYPATH && php artisan migrate --force || true
+
