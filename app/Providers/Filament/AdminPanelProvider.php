@@ -89,6 +89,12 @@ class AdminPanelProvider extends PanelProvider
                             border-bottom: 1px solid rgba(226, 232, 240, 0.9) !important;
                             box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04) !important;
                             transition: all 0.2s ease-in-out !important;
+                            height: 4rem !important;
+                        }
+
+                        .fi-topbar nav {
+                            height: 100% !important;
+                            align-items: center !important;
                         }
 
                         .dark .fi-topbar {
