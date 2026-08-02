@@ -9,16 +9,29 @@ use App\Models\Notice;
 use App\Models\Service;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 
-// Temp route to optimize live server for maximum speed
+// Route to optimize live server and establish storage symlink
 Route::get('/optimize', function () {
+    try {
+        Artisan::call('storage:link');
+    } catch (\Throwable $e) {}
     Artisan::call('optimize:clear');
     Artisan::call('config:cache');
     Artisan::call('route:cache');
     Artisan::call('view:cache');
     Artisan::call('filament:optimize');
-    return 'Production optimization complete! Your live site is now fully cached and blazing fast. You can go back now.';
+    return 'Production optimization complete! Storage link verified and live site is fully cached.';
 });
+
+// Storage fallback route for shared hosts where Apache symlinks might be restricted or pending
+Route::get('/storage/{path}', function ($path) {
+    $disk = Storage::disk('public');
+    if (!$disk->exists($path)) {
+        abort(404);
+    }
+    return $disk->response($path);
+})->where('path', '.*');
 
 // Public Site Routes
 Route::get('/', function () {
