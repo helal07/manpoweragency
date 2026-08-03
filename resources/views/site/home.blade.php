@@ -18,7 +18,7 @@
                         Govt. Approved License: {{ $siteSettings['bmet_license_no'] ?? 'RL-1452' }}
                     </span>
                     @endif
-                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white mb-6">
+                    <h1 class="text-4xl sm:text-5xl lg:text-4xl font-extrabold tracking-tight leading-tight text-white mb-6">
                         {{ $activeBanner ? $activeBanner->title : ($siteSettings['site_name'] ?? 'Empowering Global Opportunities with Trusted Manpower') }}
                     </h1>
                     <p class="text-lg text-slate-300 mb-8 leading-relaxed">
