@@ -71,12 +71,23 @@
 /* ------------------------------------------------------------------ */
 /* Sidebar Navigation Group Labels                                     */
 /* ------------------------------------------------------------------ */
+.fi-sidebar-group {
+    margin-bottom: 0.25rem !important;
+}
+
+.fi-sidebar-group+.fi-sidebar-group {
+    border-top: 1px solid rgba(148, 163, 184, 0.1) !important;
+    padding-top: 0.75rem !important;
+    margin-top: 0.5rem !important;
+}
+
 .fi-sidebar-group-label span {
-    color: #94a3b8 !important;
-    font-size: 0.68rem !important;
+    color: #f59e0b !important;
+    font-size: 0.7rem !important;
     font-weight: 800 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.12em !important;
+    letter-spacing: 0.14em !important;
+    padding-left: 0.5rem !important;
 }
 
 /* ------------------------------------------------------------------ */
@@ -85,32 +96,53 @@
 .fi-sidebar-item-button {
     border-radius: 0.75rem !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    margin: 0.15rem 0.5rem !important;
-    padding: 0.55rem 0.85rem !important;
+    margin: 0.2rem 0.5rem !important;
+    padding: 0.65rem 0.95rem !important;
+    color: #f1f5f9 !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    letter-spacing: 0.01em !important;
+}
+
+.fi-sidebar-item-button svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
     color: #94a3b8 !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
 }
 
 .fi-sidebar-item-button:hover {
     background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
-    transform: translateX(3px) !important;
+    transform: translateX(4px) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+.fi-sidebar-item-button:hover svg {
+    color: #f1f5f9 !important;
 }
 
 /* ------------------------------------------------------------------ */
 /* Active Navigation Item Glow                                         */
 /* ------------------------------------------------------------------ */
 .fi-sidebar-item-active .fi-sidebar-item-button {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(30, 58, 138, 0.35) 100%) !important;
-    border-left: 3.5px solid #f59e0b !important;
-    color: #fbbf24 !important;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(30, 58, 138, 0.4) 100%) !important;
+    border-left: 4px solid #f59e0b !important;
+    color: #ffffff !important;
     font-weight: 700 !important;
-    box-shadow: 0 4px 16px -2px rgba(245, 158, 11, 0.2) !important;
+    font-size: 0.875rem !important;
+    box-shadow: 0 4px 20px -4px rgba(245, 158, 11, 0.25),
+        inset 0 0 0 1px rgba(245, 158, 11, 0.12) !important;
 }
 
 .fi-sidebar-item-active .fi-sidebar-item-button svg {
-    color: #f59e0b !important;
-    filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)) !important;
+    color: #fbbf24 !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)) !important;
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Elevated Stats Cards                                                */
@@ -174,7 +206,7 @@
 body.fi-body-simple,
 .fi-simple-layout {
     background: linear-gradient(to bottom, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.55)),
-                url("/images/airplane_bg.png") no-repeat center center fixed !important;
+        url("/images/airplane_bg.png") no-repeat center center fixed !important;
     background-size: cover !important;
     min-height: 100vh !important;
 }
@@ -194,7 +226,7 @@ div.fi-simple-main-ctn {
 /* ------------------------------------------------------------------ */
 .fi-main-ctn,
 .fi-page,
-.fi-page > div,
+.fi-page>div,
 .fi-ta-ctn,
 .fi-ta-content {
     max-width: 100% !important;

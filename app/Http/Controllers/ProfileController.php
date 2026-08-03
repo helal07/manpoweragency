@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\CustomField;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,8 +17,18 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $customFields = CustomField::active()->get();
+        $user = $request->user();
+
+        // Preload custom field values keyed by custom_field_id
+        $customFieldValues = $user->customFieldValues()
+            ->pluck('value', 'custom_field_id')
+            ->toArray();
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'customFields' => $customFields,
+            'customFieldValues' => $customFieldValues,
         ]);
     }
 
@@ -53,36 +64,108 @@ class ProfileController extends Controller
             return Redirect::route('profile.edit')->with('status', 'assets-updated');
         }
 
-        // Validate profile info
-        $validated = $request->validate([
+        // ── Build validation rules ──
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
-                'required',
-                'string',
-                'lowercase',
-                'email',
-                'max:255',
+                'required', 'string', 'lowercase', 'email', 'max:255',
                 \Illuminate\Validation\Rule::unique(get_class($user))->ignore($user->id),
             ],
             'phone' => ['nullable', 'string', 'max:255'],
             'current_address' => ['nullable', 'string'],
             'permanent_address' => ['nullable', 'string'],
             'linkedin_url' => ['nullable', 'url', 'max:255'],
-        ]);
+            // New fixed fields
+            'fathers_name' => ['required', 'string', 'max:255'],
+            'mothers_name' => ['nullable', 'string', 'max:255'],
+            'mobile_no' => ['required', 'string', 'max:20'],
+            'date_of_birth' => ['nullable', 'date'],
+            'gender' => ['nullable', 'in:male,female,other'],
+            'marital_status' => ['nullable', 'in:single,married,divorced,widowed'],
+            'ssc_year' => ['nullable', 'integer', 'min:1950', 'max:' . date('Y')],
+            'ssc_result' => ['nullable', 'string', 'max:50'],
+            'hsc_year' => ['nullable', 'integer', 'min:1950', 'max:' . date('Y')],
+            'hsc_result' => ['nullable', 'string', 'max:50'],
+            'highest_education' => ['nullable', 'string', 'max:255'],
+            'experience_details' => ['nullable', 'string'],
+            'experience_years' => ['nullable', 'integer', 'min:0', 'max:50'],
+            'can_speak_english' => ['nullable'],
+            'english_proficiency' => ['nullable', 'in:basic,conversational,fluent,native'],
+            'other_languages' => ['nullable', 'string', 'max:255'],
+            'preferred_country' => ['nullable', 'string', 'max:255'],
+            'passport_expiry' => ['nullable', 'date'],
+            'emergency_contact_name' => ['nullable', 'string', 'max:255'],
+            'emergency_contact_phone' => ['nullable', 'string', 'max:20'],
+        ];
 
-        $user->fill($validated);
-        
-        // Add new profile fields
-        $user->phone = $request->input('phone');
-        $user->current_address = $request->input('current_address');
-        $user->permanent_address = $request->input('permanent_address');
-        $user->linkedin_url = $request->input('linkedin_url');
+        // ── Dynamic custom field validation ──
+        $customFields = CustomField::active()->get();
+        foreach ($customFields as $field) {
+            $fieldRules = [];
+            if ($field->is_required) {
+                $fieldRules[] = 'required';
+            } else {
+                $fieldRules[] = 'nullable';
+            }
+
+            match ($field->type) {
+                'number' => $fieldRules[] = 'numeric',
+                'date' => $fieldRules[] = 'date',
+                'select' => $fieldRules[] = 'in:' . implode(',', $field->options ?? []),
+                'file' => $fieldRules = array_merge($fieldRules, ['file', 'max:5120']),
+                default => $fieldRules[] = 'string',
+            };
+
+            $rules["custom_field.{$field->id}"] = $fieldRules;
+        }
+
+        $validated = $request->validate($rules);
+
+        // ── Fill fixed fields ──
+        $fixedFields = [
+            'name', 'email', 'phone', 'current_address', 'permanent_address', 'linkedin_url',
+            'fathers_name', 'mothers_name', 'mobile_no', 'date_of_birth', 'gender', 'marital_status',
+            'ssc_year', 'ssc_result', 'hsc_year', 'hsc_result', 'highest_education',
+            'experience_details', 'experience_years', 'english_proficiency', 'other_languages',
+            'preferred_country', 'passport_expiry', 'emergency_contact_name', 'emergency_contact_phone',
+        ];
+
+        foreach ($fixedFields as $field) {
+            if (array_key_exists($field, $validated)) {
+                $user->{$field} = $validated[$field];
+            }
+        }
+
+        // Handle boolean checkbox
+        $user->can_speak_english = $request->boolean('can_speak_english');
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }
 
         $user->save();
+
+        // ── Save custom field values ──
+        $customFieldData = $request->input('custom_field', []);
+        foreach ($customFields as $field) {
+            $value = $customFieldData[$field->id] ?? null;
+
+            // Handle checkbox type
+            if ($field->type === 'checkbox') {
+                $value = isset($customFieldData[$field->id]) ? '1' : '0';
+            }
+
+            // Handle file type
+            if ($field->type === 'file' && $request->hasFile("custom_field.{$field->id}")) {
+                $path = $request->file("custom_field.{$field->id}")->store('custom-field-uploads', 'public');
+                $value = $path;
+            }
+
+            $user->customFieldValues()->updateOrCreate(
+                ['custom_field_id' => $field->id],
+                ['value' => $value]
+            );
+        }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
