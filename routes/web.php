@@ -11,8 +11,45 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 
-// Route to optimize live server, fix storage permissions, and establish symlink
+// Route to optimize live server, clear all stale bootstrap/view caches, run migrations, and fix storage permissions
 Route::get('/optimize', function () {
+    $results = [];
+
+    // 1. Clear all Artisan caches
+    try {
+        Artisan::call('optimize:clear');
+        $results[] = '✅ optimize:clear executed';
+    } catch (\Throwable $e) {
+        $results[] = '⚠️ optimize:clear: ' . $e->getMessage();
+    }
+
+    // 2. Clear manual bootstrap cache files
+    $bootstrapCache = base_path('bootstrap/cache');
+    if (is_dir($bootstrapCache)) {
+        foreach (glob($bootstrapCache . '/*.php') as $file) {
+            @unlink($file);
+        }
+        $results[] = '✅ bootstrap/cache/*.php files wiped clean';
+    }
+
+    // 3. Clear compiled Blade views in storage/framework/views
+    $viewsCache = storage_path('framework/views');
+    if (is_dir($viewsCache)) {
+        foreach (glob($viewsCache . '/*.php') as $file) {
+            @unlink($file);
+        }
+        $results[] = '✅ storage/framework/views/*.php templates wiped clean';
+    }
+
+    // 4. Run database migrations
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+        $results[] = '✅ Database migrations applied: ' . trim(Artisan::output());
+    } catch (\Throwable $e) {
+        $results[] = '⚠️ Database migration: ' . $e->getMessage();
+    }
+
+    // 5. Fix storage permissions & establish symlink
     $storagePublic = storage_path('app/public');
     if (is_dir($storagePublic)) {
         @chmod(storage_path(), 0755);
@@ -36,15 +73,25 @@ Route::get('/optimize', function () {
 
     try {
         Artisan::call('storage:link');
-    } catch (\Throwable $e) {}
+        $results[] = '✅ Storage symlink verified';
+    } catch (\Throwable $e) {
+        $results[] = 'ℹ️ Storage symlink: ' . $e->getMessage();
+    }
 
-    Artisan::call('optimize:clear');
+    // 6. Clear application global cache
     \Illuminate\Support\Facades\Cache::forget('site_settings_global_cache');
-    Artisan::call('config:cache');
-    Artisan::call('route:cache');
-    Artisan::call('view:cache');
-    
-    return 'Production optimization complete! Storage permissions (0755/0644) fixed, symlink verified, and live site is fully cached.';
+
+    $html = '<div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 25px; border-radius: 12px; background: #0f172a; color: #f8fafc; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">';
+    $html .= '<h2 style="color: #38bdf8; margin-top: 0;">🚀 Deployment & Cache Synchronization Complete</h2>';
+    $html .= '<ul style="line-height: 1.8; padding-left: 20px;">';
+    foreach ($results as $res) {
+        $html .= '<li>' . htmlspecialchars($res) . '</li>';
+    }
+    $html .= '</ul>';
+    $html .= '<div style="margin-top: 20px;"><a href="' . url('/admin') . '" style="display: inline-block; background: #0284c7; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Go to Admin Panel &rarr;</a></div>';
+    $html .= '</div>';
+
+    return response($html);
 });
 
 // Storage fallback route for shared hosts where Apache symlinks might be restricted or pending
