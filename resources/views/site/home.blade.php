@@ -199,22 +199,100 @@
         </div>
     </div>
 
-    <!-- International Employer Clients -->
-    <div class="py-16 bg-slate-50 border-t border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-xl mx-auto mb-10">
-                <span class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1 block">Global Partnerships</span>
-                <h2 class="text-2xl font-extrabold text-slate-900">Valued Employer Partners</h2>
-            </div>
+    <!-- International Employer Clients (Single-Row Circular Carousel) -->
+    <div class="py-16 bg-slate-50 border-t border-slate-200 overflow-hidden relative">
+        <style>
+            @keyframes clientMarquee {
+                0% {
+                    transform: translateX(0%);
+                }
+                100% {
+                    transform: translateX(-50%);
+                }
+            }
+            .client-carousel-track {
+                display: flex;
+                width: max-content;
+                animation: clientMarquee 38s linear infinite;
+            }
+            .client-carousel-track:hover {
+                animation-play-state: paused;
+            }
+        </style>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                @foreach($clients as $client)
-                    <div class="bg-white rounded-xl p-5 border border-slate-200 text-center hover:shadow-md transition-shadow">
-                        <div class="text-sm font-extrabold text-slate-900 mb-1">{{ $client->name }}</div>
-                        <div class="text-xs text-blue-600 font-semibold mb-1">{{ $client->country }}</div>
-                        <div class="text-[11px] text-slate-400">{{ $client->sector }}</div>
-                    </div>
-                @endforeach
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1 block">Global Partnerships</span>
+                    <h2 class="text-2xl lg:text-3xl font-extrabold text-slate-900">Valued Employer Partners</h2>
+                </div>
+                <div>
+                    <a href="{{ url('/clients') }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors group">
+                        <span>View All Client Partners</span>
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carousel Container with Edge Gradient Fades -->
+        <div class="relative w-full overflow-hidden">
+            <!-- Left & Right Fade Gradients -->
+            <div class="pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-28 bg-gradient-to-r from-slate-50 to-transparent z-10"></div>
+            <div class="pointer-events-none absolute inset-y-0 right-0 w-16 sm:w-28 bg-gradient-to-l from-slate-50 to-transparent z-10"></div>
+
+            <!-- Single Row Infinite Moving Track -->
+            <div class="client-carousel-track gap-5 py-2 px-4">
+                {{-- Loop twice for continuous seamless infinite loop --}}
+                @for ($loopCount = 0; $loopCount < 2; $loopCount++)
+                    @foreach($clients as $client)
+                        <div class="w-[280px] sm:w-[320px] flex-shrink-0 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
+                            <div>
+                                <!-- Top: Logo or Brand Avatar -->
+                                <div class="flex items-center justify-between gap-3 mb-3">
+                                    <div class="h-12 w-28 flex items-center justify-start overflow-hidden">
+                                        @if($client->logo)
+                                            <img src="{{ $client->logo_url }}" alt="{{ $client->name }}" class="max-h-12 max-w-full object-contain filter group-hover:scale-105 transition-transform">
+                                        @else
+                                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
+                                                {{ $client->initials }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                        {{ $client->country }}
+                                    </span>
+                                </div>
+
+                                <!-- Client Name -->
+                                <h3 class="text-sm font-extrabold text-slate-900 line-clamp-1 group-hover:text-blue-600 transition-colors mb-1" title="{{ $client->name }}">
+                                    {{ $client->name }}
+                                </h3>
+
+                                <!-- Sector -->
+                                <p class="text-xs text-slate-500 line-clamp-1 mb-2">
+                                    {{ $client->sector }}
+                                </p>
+                            </div>
+
+                            <!-- Bottom Website Link if exists -->
+                            @if($client->website_url)
+                                <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-blue-600 font-semibold">
+                                    <span>Official Partner</span>
+                                    <a href="{{ $client->website_url }}" target="_blank" rel="noopener noreferrer" class="hover:underline flex items-center gap-1">
+                                        <span>Website</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    </a>
+                                </div>
+                            @else
+                                <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                                    <span>Verified Employer</span>
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                @endfor
             </div>
         </div>
     </div>

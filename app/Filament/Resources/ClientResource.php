@@ -27,23 +27,49 @@ class ClientResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Client Details')->schema([
-                    Forms\Components\TextInput::make('name')
-                        ->required(),
-                    Grid::make(2)->schema([
-                        Forms\Components\TextInput::make('country')
+                Section::make('Client Company Details')
+                    ->icon('heroicon-o-building-office')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Company / Client Name')
+                            ->placeholder('e.g. Almarai Food & Beverage Company')
                             ->required(),
-                        Forms\Components\TextInput::make('sector')
-                            ->required(),
+
+                        Forms\Components\FileUpload::make('logo')
+                            ->label('Client Logo / Corporate Photo')
+                            ->image()
+                            ->imageEditor()
+                            ->disk('public')
+                            ->directory('clients')
+                            ->helperText('Upload official client logo or branch photo (PNG with transparent background, SVG, or JPG recommended).')
+                            ->nullable(),
+
+                        Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('country')
+                                ->label('Country / Location')
+                                ->placeholder('e.g. Saudi Arabia, UAE, Qatar')
+                                ->required(),
+
+                            Forms\Components\TextInput::make('sector')
+                                ->label('Industry / Sector')
+                                ->placeholder('e.g. Construction & Civil Engineering, FMCG')
+                                ->required(),
+                        ]),
+
+                        Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('website_url')
+                                ->label('Website URL')
+                                ->placeholder('https://example.com')
+                                ->url()
+                                ->nullable(),
+
+                            Forms\Components\TextInput::make('order')
+                                ->label('Display Sort Order')
+                                ->numeric()
+                                ->default(0)
+                                ->helperText('Lower numbers appear first in the carousel.'),
+                        ]),
                     ]),
-                    Grid::make(2)->schema([
-                        Forms\Components\TextInput::make('website_url')
-                            ->url(),
-                        Forms\Components\TextInput::make('order')
-                            ->numeric()
-                            ->default(0),
-                    ]),
-                ]),
             ]);
     }
 
@@ -51,10 +77,40 @@ class ClientResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('country')->sortable(),
-                Tables\Columns\TextColumn::make('sector')->sortable(),
-                Tables\Columns\TextColumn::make('order')->sortable(),
+                Tables\Columns\ImageColumn::make('logo')
+                    ->label('Logo')
+                    ->disk('public')
+                    ->height(40)
+                    ->defaultImageUrl(fn () => null)
+                    ->placeholder('No Logo')
+                    ->circular(false),
+
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Client Name')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->wrap(),
+
+                Tables\Columns\TextColumn::make('country')
+                    ->badge()
+                    ->color('info')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('sector')
+                    ->searchable()
+                    ->sortable()
+                    ->wrap(),
+
+                Tables\Columns\TextColumn::make('website_url')
+                    ->label('Website')
+                    ->limit(25)
+                    ->url(fn ($record) => $record->website_url, true)
+                    ->color('primary'),
+
+                Tables\Columns\TextColumn::make('order')
+                    ->sortable()
+                    ->alignCenter(),
             ])
             ->filters([])
             ->actions([
@@ -63,7 +119,8 @@ class ClientResource extends Resource
             ])
             ->bulkActions([
                 Actions\DeleteBulkAction::make(),
-            ]);
+            ])
+            ->defaultSort('order', 'asc');
     }
 
     public static function getPages(): array

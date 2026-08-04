@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -48,6 +49,18 @@ class CustomField extends Model
     public function values(): HasMany
     {
         return $this->hasMany(CustomFieldValue::class);
+    }
+
+    public function applicationValues(): HasMany
+    {
+        return $this->hasMany(JobApplicationFieldValue::class);
+    }
+
+    public function jobCirculars(): BelongsToMany
+    {
+        return $this->belongsToMany(JobCircular::class, 'job_circular_custom_field')
+            ->withPivot('is_required', 'sort_order')
+            ->withTimestamps();
     }
 
     /**

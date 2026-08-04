@@ -4,9 +4,12 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CustomFieldResource\Pages;
 use App\Models\CustomField;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -22,11 +25,11 @@ class CustomFieldResource extends Resource
 
     protected static ?string $navigationLabel = 'Custom Fields';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Field Definition')
+        return $schema
+            ->components([
+                Section::make('Field Definition')
                     ->description('Define a custom field that applicants will fill in on their profile.')
                     ->schema([
                         Forms\Components\TextInput::make('label')
@@ -34,69 +37,72 @@ class CustomFieldResource extends Resource
                             ->placeholder('e.g., Do you have a forklift license?')
                             ->required()
                             ->maxLength(255)
-                            ->columnSpanFull()
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn (Forms\Set $set, ?string $state) => $set('name', \Illuminate\Support\Str::slug($state ?? '', '_'))),
+                            ->afterStateUpdated(fn ($set, ?string $state) => $set('name', \Illuminate\Support\Str::slug($state ?? '', '_'))),
 
-                        Forms\Components\TextInput::make('name')
-                            ->label('Field Key (auto-generated)')
-                            ->required()
-                            ->maxLength(255)
-                            ->unique(ignoreRecord: true)
-                            ->helperText('Auto-generated from label. Used internally.'),
+                        Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('name')
+                                ->label('Field Key (auto-generated)')
+                                ->required()
+                                ->maxLength(255)
+                                ->unique(ignoreRecord: true)
+                                ->helperText('Auto-generated from label. Used internally.'),
 
-                        Forms\Components\Select::make('type')
-                            ->label('Field Type')
-                            ->options([
-                                'text' => 'Text (single line)',
-                                'textarea' => 'Textarea (multi-line)',
-                                'number' => 'Number',
-                                'select' => 'Dropdown (select)',
-                                'checkbox' => 'Checkbox (Yes/No)',
-                                'date' => 'Date Picker',
-                                'file' => 'File Upload',
-                            ])
-                            ->required()
-                            ->live(),
+                            Forms\Components\Select::make('type')
+                                ->label('Field Type')
+                                ->options([
+                                    'text' => 'Text (single line)',
+                                    'textarea' => 'Textarea (multi-line)',
+                                    'number' => 'Number',
+                                    'select' => 'Dropdown (select)',
+                                    'checkbox' => 'Checkbox (Yes/No)',
+                                    'date' => 'Date Picker',
+                                    'file' => 'File Upload',
+                                ])
+                                ->required()
+                                ->live(),
+                        ]),
 
                         Forms\Components\TagsInput::make('options')
                             ->label('Dropdown Options')
                             ->placeholder('Add option and press Enter')
                             ->helperText('Add each option one by one. Only used for Dropdown type.')
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'select')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'select'),
-                    ])
-                    ->columns(2),
+                            ->visible(fn ($get) => $get('type') === 'select')
+                            ->required(fn ($get) => $get('type') === 'select'),
+                    ]),
 
-                Forms\Components\Section::make('Settings')
+                Section::make('Settings')
                     ->schema([
-                        Forms\Components\Toggle::make('is_required')
-                            ->label('Required')
-                            ->helperText('If enabled, applicants must fill this field before saving their profile.')
-                            ->default(false),
+                        Grid::make(2)->schema([
+                            Forms\Components\Toggle::make('is_required')
+                                ->label('Required')
+                                ->helperText('If enabled, applicants must fill this field before saving their profile.')
+                                ->default(false),
 
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
-                            ->helperText('Inactive fields are hidden from applicants but data is preserved.')
-                            ->default(true),
+                            Forms\Components\Toggle::make('is_active')
+                                ->label('Active')
+                                ->helperText('Inactive fields are hidden from applicants but data is preserved.')
+                                ->default(true),
+                        ]),
 
-                        Forms\Components\TextInput::make('sort_order')
-                            ->label('Sort Order')
-                            ->numeric()
-                            ->default(0)
-                            ->helperText('Lower numbers appear first.'),
+                        Grid::make(3)->schema([
+                            Forms\Components\TextInput::make('sort_order')
+                                ->label('Sort Order')
+                                ->numeric()
+                                ->default(0)
+                                ->helperText('Lower numbers appear first.'),
 
-                        Forms\Components\TextInput::make('placeholder')
-                            ->label('Placeholder Text')
-                            ->placeholder('e.g., Enter your certificate number')
-                            ->maxLength(255),
+                            Forms\Components\TextInput::make('placeholder')
+                                ->label('Placeholder Text')
+                                ->placeholder('e.g., Enter certificate number')
+                                ->maxLength(255),
 
-                        Forms\Components\TextInput::make('help_text')
-                            ->label('Help Text')
-                            ->placeholder('e.g., This will be shown below the field')
-                            ->maxLength(255),
-                    ])
-                    ->columns(2),
+                            Forms\Components\TextInput::make('help_text')
+                                ->label('Help Text')
+                                ->placeholder('e.g., Shown below the input field')
+                                ->maxLength(255),
+                        ]),
+                    ]),
             ]);
     }
 
@@ -153,13 +159,11 @@ class CustomFieldResource extends Resource
                     ->label('Required Status'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Actions\DeleteBulkAction::make(),
             ])
             ->reorderable('sort_order');
     }

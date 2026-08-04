@@ -89,7 +89,7 @@ Route::get('/job-circulars', function () {
 })->name('circulars.index');
 
 Route::get('/job-circulars/{slug}', function ($slug) {
-    $circular = JobCircular::where('slug', $slug)->firstOrFail();
+    $circular = JobCircular::with('customFields')->where('slug', $slug)->firstOrFail();
     return view('site.circular-detail', compact('circular'));
 })->name('circulars.show');
 

@@ -52,6 +52,7 @@ class DatabaseSeeder extends Seeder
             ClientSeeder::class,
             LeaderSeeder::class,
             RoleSeeder::class,
+            CustomFieldSeeder::class,
         ]);
     }
 }
