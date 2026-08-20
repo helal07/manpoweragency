@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Settings\SiteSettings;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Implicitly grant "super_admin" role all permissions
+        Gate::before(function ($user, $ability) {
+            return method_exists($user, 'hasRole') && $user->hasRole('super_admin', 'admin') ? true : null;
+        });
+
         // Only load settings for front-end views and the footer, ignoring Livewire backend entirely
         View::composer([
             'site.*', 

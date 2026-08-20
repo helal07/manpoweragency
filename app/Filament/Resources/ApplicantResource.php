@@ -29,20 +29,7 @@ class ApplicantResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
-    public static function canCreate(): bool
-    {
-        return false;
-    }
 
-    public static function canEdit(Model $record): bool
-    {
-        return false;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        return false;
-    }
 
     public static function infolist(Schema $schema): Schema
     {

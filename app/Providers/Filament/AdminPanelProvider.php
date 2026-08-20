@@ -71,7 +71,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn (): string => '<link rel="stylesheet" href="' . asset('css/filament-custom.css') . '">'
+                fn (): string => '<link rel="stylesheet" href="' . asset('css/filament-custom.css') . '?v=' . (file_exists(public_path('css/filament-custom.css')) ? filemtime(public_path('css/filament-custom.css')) : time()) . '">'
             )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,

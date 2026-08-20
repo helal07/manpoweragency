@@ -37,7 +37,7 @@ class ManageSettings extends Page implements HasForms
     {
         /** @var \App\Models\User|null $user */
         $user = auth()->user();
-        return $user ? ($user->hasRole('super_admin') || str_ends_with($user->email, '@admin.com')) : false;
+        return $user ? ($user->hasRole('super_admin', 'admin') || $user->can('manage_site_settings')) : false;
     }
 
     public function mount(SiteSettings $settings): void
