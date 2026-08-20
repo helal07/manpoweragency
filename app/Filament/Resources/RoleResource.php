@@ -33,13 +33,12 @@ class RoleResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        $allPermissions = Permission::where('guard_name', 'admin')->get();
-
-        $websiteContentPerms = $allPermissions->filter(fn ($p) => str_contains($p->name, 'hero') || str_contains($p->name, 'leader') || str_contains($p->name, 'service') || str_contains($p->name, 'client') || str_contains($p->name, 'about') || str_contains($p->name, 'contact') || str_contains($p->name, 'footer') || str_contains($p->name, 'website'))->pluck('name', 'id')->toArray();
-
-        $recruitmentPerms = $allPermissions->filter(fn ($p) => str_contains($p->name, 'circular') || str_contains($p->name, 'application') || str_contains($p->name, 'applicant') || str_contains($p->name, 'notice'))->pluck('name', 'id')->toArray();
-
-        $adminPerms = $allPermissions->filter(fn ($p) => str_contains($p->name, 'setting') || str_contains($p->name, 'custom_field') || str_contains($p->name, 'user') || str_contains($p->name, 'role'))->pluck('name', 'id')->toArray();
+        // Auto-seed permissions if database table is empty
+        try {
+            if (Permission::where('guard_name', 'admin')->count() === 0) {
+                (new \Database\Seeders\PermissionSeeder())->run();
+            }
+        } catch (\Throwable $e) {}
 
         return $schema
             ->components([
@@ -64,7 +63,22 @@ class RoleResource extends Resource
                             ->collapsible()
                             ->schema([
                                 CheckboxList::make('permissions')
-                                    ->relationship('permissions', 'name', fn ($query) => $query->where('guard_name', 'admin')->whereIn('name', array_values($websiteContentPerms)))
+                                    ->label('Website Content Permissions')
+                                    ->relationship(
+                                        name: 'permissions',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: fn ($query) => $query->where('guard_name', 'admin')->where(function ($q) {
+                                            $q->where('name', 'like', '%hero%')
+                                              ->orWhere('name', 'like', '%leader%')
+                                              ->orWhere('name', 'like', '%service%')
+                                              ->orWhere('name', 'like', '%client%')
+                                              ->orWhere('name', 'like', '%about%')
+                                              ->orWhere('name', 'like', '%contact%')
+                                              ->orWhere('name', 'like', '%footer%')
+                                              ->orWhere('name', 'like', '%website%');
+                                        })
+                                    )
+                                    ->getOptionLabelFromRecordUsingFn(fn ($record) => ucwords(str_replace('_', ' ', $record->name)))
                                     ->columns(2)
                                     ->bulkToggleable(),
                             ]),
@@ -74,7 +88,18 @@ class RoleResource extends Resource
                             ->collapsible()
                             ->schema([
                                 CheckboxList::make('permissions')
-                                    ->relationship('permissions', 'name', fn ($query) => $query->where('guard_name', 'admin')->whereIn('name', array_values($recruitmentPerms)))
+                                    ->label('Recruitment Permissions')
+                                    ->relationship(
+                                        name: 'permissions',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: fn ($query) => $query->where('guard_name', 'admin')->where(function ($q) {
+                                            $q->where('name', 'like', '%circular%')
+                                              ->orWhere('name', 'like', '%application%')
+                                              ->orWhere('name', 'like', '%applicant%')
+                                              ->orWhere('name', 'like', '%notice%');
+                                        })
+                                    )
+                                    ->getOptionLabelFromRecordUsingFn(fn ($record) => ucwords(str_replace('_', ' ', $record->name)))
                                     ->columns(2)
                                     ->bulkToggleable(),
                             ]),
@@ -84,7 +109,18 @@ class RoleResource extends Resource
                             ->collapsible()
                             ->schema([
                                 CheckboxList::make('permissions')
-                                    ->relationship('permissions', 'name', fn ($query) => $query->where('guard_name', 'admin')->whereIn('name', array_values($adminPerms)))
+                                    ->label('Administration Permissions')
+                                    ->relationship(
+                                        name: 'permissions',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: fn ($query) => $query->where('guard_name', 'admin')->where(function ($q) {
+                                            $q->where('name', 'like', '%setting%')
+                                              ->orWhere('name', 'like', '%custom_field%')
+                                              ->orWhere('name', 'like', '%user%')
+                                              ->orWhere('name', 'like', '%role%');
+                                        })
+                                    )
+                                    ->getOptionLabelFromRecordUsingFn(fn ($record) => ucwords(str_replace('_', ' ', $record->name)))
                                     ->columns(2)
                                     ->bulkToggleable(),
                             ]),
