@@ -17,8 +17,9 @@ deployment:
     # 5. Clear all stale runtime and bootstrap caches FIRST
     - cd $DEPLOYPATH && php artisan optimize:clear
 
-    # 6. Run database migrations BEFORE route caching
+    # 6. Run database migrations and seed permissions BEFORE route caching
     - cd $DEPLOYPATH && php artisan migrate --force
+    - cd $DEPLOYPATH && php artisan db:seed --class=PermissionSeeder --force || true
 
     # 7. Ensure storage symlink exists
     - cd $DEPLOYPATH && php artisan storage:link || true

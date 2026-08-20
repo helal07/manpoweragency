@@ -11,6 +11,61 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 
+// Route to run database migrations, seed permissions, and clear caches directly via browser
+Route::get('/run-migrations', function () {
+    $results = [];
+
+    // 1. Run database migrations
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+        $output = trim(Artisan::output());
+        $results[] = '✅ Database Migrations: ' . ($output ?: 'Database is already up to date.');
+    } catch (\Throwable $e) {
+        $results[] = '⚠️ Database Migration Error: ' . $e->getMessage();
+    }
+
+    // 2. Seed Spatie RBAC Permissions & Default Roles
+    try {
+        Artisan::call('db:seed', ['--class' => 'PermissionSeeder', '--force' => true]);
+        $results[] = '✅ Roles & Permissions: Successfully synced and seeded.';
+    } catch (\Throwable $e) {
+        $results[] = '⚠️ Permission Seeder Error: ' . $e->getMessage();
+    }
+
+    // 3. Clear all caches
+    try {
+        Artisan::call('optimize:clear');
+        $results[] = '✅ optimize:clear executed';
+    } catch (\Throwable $e) {
+        $results[] = '⚠️ optimize:clear: ' . $e->getMessage();
+    }
+
+    // 4. Clear compiled views & settings cache
+    $viewsCache = storage_path('framework/views');
+    if (is_dir($viewsCache)) {
+        foreach (glob($viewsCache . '/*.php') as $file) {
+            @unlink($file);
+        }
+        $results[] = '✅ Compiled Blade views wiped clean';
+    }
+    \Illuminate\Support\Facades\Cache::forget('site_settings_global_cache');
+
+    $html = '<div style="font-family: system-ui, sans-serif; max-width: 650px; margin: 50px auto; padding: 30px; border-radius: 16px; background: #0f172a; color: #f8fafc; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 1px solid rgba(56, 189, 248, 0.2);">';
+    $html .= '<h2 style="color: #38bdf8; margin-top: 0; font-size: 1.5rem;">🚀 Database Migrations & Permissions Synced</h2>';
+    $html .= '<ul style="line-height: 2; padding-left: 20px; font-size: 0.95rem;">';
+    foreach ($results as $res) {
+        $html .= '<li>' . htmlspecialchars($res) . '</li>';
+    }
+    $html .= '</ul>';
+    $html .= '<div style="margin-top: 25px; display: flex; gap: 12px;">';
+    $html .= '<a href="' . url('/admin') . '" style="display: inline-block; background: #0284c7; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Go to Admin Panel &rarr;</a>';
+    $html .= '<a href="' . url('/') . '" style="display: inline-block; background: #334155; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Visit Website &rarr;</a>';
+    $html .= '</div>';
+    $html .= '</div>';
+
+    return response($html);
+});
+
 // Route to optimize live server, clear all stale bootstrap/view caches, run migrations, and fix storage permissions
 Route::get('/optimize', function () {
     $results = [];
