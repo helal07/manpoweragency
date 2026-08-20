@@ -12,10 +12,10 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid lg:grid-cols-12 gap-12 items-center">
                 <div class="lg:col-span-7">
-                    @if($siteSettings['show_bmet_license'] ?? true)
+                    @if(!empty($siteSettings['show_bmet_license']) && !empty($siteSettings['bmet_license_no']))
                     <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 mb-6">
                         <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-                        Govt. Approved License: {{ $siteSettings['bmet_license_no'] ?? 'RL-1452' }}
+                        Govt. Approved License: {{ $siteSettings['bmet_license_no'] }}
                     </span>
                     @endif
                     <h1 class="text-4xl sm:text-5xl lg:text-4xl font-extrabold tracking-tight leading-tight text-white mb-6">
@@ -90,10 +90,12 @@
                     <div class="text-xs font-bold text-slate-500 uppercase">Emergency Hotline</div>
                     <div class="text-lg font-extrabold text-slate-900">{{ $siteSettings['company_hotline'] ?? '+880 1711-009988' }}</div>
                 </div>
+                @if(!empty($siteSettings['show_bmet_license']) && !empty($siteSettings['bmet_license_no']))
                 <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
                     <div class="text-xs font-bold text-slate-500 uppercase">Govt. BMET License</div>
-                    <div class="text-sm font-bold text-blue-600">{{ $siteSettings['bmet_license_no'] ?? 'RL-1452' }}</div>
+                    <div class="text-sm font-bold text-blue-600">{{ $siteSettings['bmet_license_no'] }}</div>
                 </div>
+                @endif
             </div>
         </div>
     </div>

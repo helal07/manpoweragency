@@ -41,12 +41,14 @@
                     <span style="color: #FFFFFF !important;">{{ $siteSettings['company_email'] ?? 'info@globalmanpower.com' }}</span>
                 </span>
             </div>
+            @if(!empty($siteSettings['show_bmet_license']) && !empty($siteSettings['bmet_license_no']))
             <div class="flex items-center space-x-4">
                 <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full" style="background-color: rgba(0, 0, 0, 0.25); border: 1px solid #F59E0B; color: #F59E0B; font-weight: 700;">
                     <span class="w-2 h-2 rounded-full animate-pulse" style="background-color: #F59E0B;"></span>
-                    Govt. License: {{ $siteSettings['bmet_license_no'] ?? 'RL-1452' }}
+                    Govt. License: {{ $siteSettings['bmet_license_no'] }}
                 </span>
             </div>
+            @endif
         </div>
     </div>
 

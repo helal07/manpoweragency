@@ -30,6 +30,41 @@ class SiteSettings extends Settings
     public ?string $nav_notices_label;
     public ?string $nav_login_label;
 
+    // About Page CMS Properties
+    public ?string $about_banner_title;
+    public ?string $about_banner_subtitle;
+    public ?string $about_story_title;
+    public ?string $about_story_p1;
+    public ?string $about_story_p2;
+    public ?string $about_mission_title;
+    public ?string $about_mission_statement;
+    public ?string $about_vision_title;
+    public ?string $about_vision_statement;
+    public ?string $about_accreditation_title;
+    public ?string $about_accreditation_1;
+    public ?string $about_accreditation_2;
+    public ?string $about_accreditation_3;
+    public ?string $about_accreditation_4;
+    public ?string $about_office_title;
+    public ?string $about_office_hours;
+    public ?string $about_leadership_title;
+    public ?string $about_leadership_subtitle;
+
+    // Services Page CMS & Deployment Workflow Properties
+    public ?string $services_banner_tag;
+    public ?string $services_banner_title;
+    public ?string $services_banner_desc;
+    public ?string $services_workflow_subtitle;
+    public ?string $services_workflow_title;
+    public ?string $services_workflow_step1_title;
+    public ?string $services_workflow_step1_desc;
+    public ?string $services_workflow_step2_title;
+    public ?string $services_workflow_step2_desc;
+    public ?string $services_workflow_step3_title;
+    public ?string $services_workflow_step3_desc;
+    public ?string $services_workflow_step4_title;
+    public ?string $services_workflow_step4_desc;
+
     public static function group(): string
     {
         return 'site';

@@ -47,11 +47,13 @@
                             </div>
                         </a>
 
+                        @if(!empty($siteSettings['show_bmet_license']) && !empty($siteSettings['bmet_license_no']))
                         <!-- 10% Accent Badge: Warm Amber Gold #F59E0B -->
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#0F172A] text-[#F59E0B] border border-[#F59E0B]/50 shadow-sm">
                             <span class="w-2 h-2 rounded-full bg-[#F59E0B] animate-pulse"></span>
-                            Govt. License: {{ $siteSettings['bmet_license_no'] ?? 'RL-1452' }}
+                            Govt. License: {{ $siteSettings['bmet_license_no'] }}
                         </span>
+                        @endif
                     </div>
 
                     <!-- Overseas Agency Overview -->

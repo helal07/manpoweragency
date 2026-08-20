@@ -6,9 +6,9 @@
 <!-- Header Banner -->
 <div class="bg-slate-950 text-white py-16 border-b border-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <span class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2 block">Our Solutions</span>
-        <h1 class="text-3xl lg:text-4xl font-extrabold">Overseas Recruitment & Mobility Services</h1>
-        <p class="text-slate-400 mt-2 max-w-2xl text-base">End-to-end solutions for foreign employer companies and Bangladeshi job seekers.</p>
+        <span class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2 block">{{ $siteSettings['services_banner_tag'] ?? 'Our Solutions' }}</span>
+        <h1 class="text-3xl lg:text-4xl font-extrabold">{{ $siteSettings['services_banner_title'] ?? 'Overseas Recruitment & Mobility Services' }}</h1>
+        <p class="text-slate-400 mt-2 max-w-2xl text-base">{{ $siteSettings['services_banner_desc'] ?? 'End-to-end solutions for foreign employer companies and Bangladeshi job seekers.' }}</p>
     </div>
 </div>
 
@@ -38,26 +38,26 @@
     <!-- Recruitment Process Workflow Timeline -->
     <div class="bg-slate-900 text-white rounded-3xl p-8 lg:p-12 border border-slate-800">
         <div class="text-center max-w-xl mx-auto mb-10">
-            <span class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-1 block">Step-By-Step Workflow</span>
-            <h2 class="text-2xl font-extrabold text-white">How We Deploy Manpower</h2>
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-1 block">{{ $siteSettings['services_workflow_subtitle'] ?? 'Step-By-Step Workflow' }}</span>
+            <h2 class="text-2xl font-extrabold text-white">{{ $siteSettings['services_workflow_title'] ?? 'How We Deploy Manpower' }}</h2>
         </div>
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
-                <div class="text-blue-400 font-extrabold text-lg mb-1">01. Demand Receipt</div>
-                <p class="text-xs text-slate-400">Employer posts visa demand order with embassy endorsement.</p>
+                <div class="text-blue-400 font-extrabold text-lg mb-1">{{ $siteSettings['services_workflow_step1_title'] ?? '01. Demand Receipt' }}</div>
+                <p class="text-xs text-slate-400">{{ $siteSettings['services_workflow_step1_desc'] ?? 'Employer posts visa demand order with embassy endorsement.' }}</p>
             </div>
             <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
-                <div class="text-blue-400 font-extrabold text-lg mb-1">02. Screening & Test</div>
-                <p class="text-xs text-slate-400">Shortlisting and trade testing at certified technical workshops.</p>
+                <div class="text-blue-400 font-extrabold text-lg mb-1">{{ $siteSettings['services_workflow_step2_title'] ?? '02. Screening & Test' }}</div>
+                <p class="text-xs text-slate-400">{{ $siteSettings['services_workflow_step2_desc'] ?? 'Shortlisting and trade testing at certified technical workshops.' }}</p>
             </div>
             <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
-                <div class="text-blue-400 font-extrabold text-lg mb-1">03. Medical & Visa</div>
-                <p class="text-xs text-slate-400">GAMCA medical checkup, MOFA visa stamping & BMET Smart Card.</p>
+                <div class="text-blue-400 font-extrabold text-lg mb-1">{{ $siteSettings['services_workflow_step3_title'] ?? '03. Medical & Visa' }}</div>
+                <p class="text-xs text-slate-400">{{ $siteSettings['services_workflow_step3_desc'] ?? 'GAMCA medical checkup, MOFA visa stamping & BMET Smart Card.' }}</p>
             </div>
             <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
-                <div class="text-blue-400 font-extrabold text-lg mb-1">04. Flight Departure</div>
-                <p class="text-xs text-slate-400">Pre-departure briefing, airline ticket issue & airport assistance.</p>
+                <div class="text-blue-400 font-extrabold text-lg mb-1">{{ $siteSettings['services_workflow_step4_title'] ?? '04. Flight Departure' }}</div>
+                <p class="text-xs text-slate-400">{{ $siteSettings['services_workflow_step4_desc'] ?? 'Pre-departure briefing, airline ticket issue & airport assistance.' }}</p>
             </div>
         </div>
     </div>

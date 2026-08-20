@@ -223,10 +223,12 @@
                 </div>
             </div>
 
+            @if(!empty($siteSettings['show_bmet_license']) && !empty($siteSettings['bmet_license_no']))
             <div class="bg-slate-900 text-white rounded-2xl p-6 border border-slate-800 text-xs space-y-3">
                 <div class="font-bold text-blue-400 uppercase tracking-wider">Government License Notice</div>
-                <p class="text-slate-300 leading-relaxed">This job circular is issued under BMET Govt. License {{ $siteSettings['bmet_license_no'] ?? 'RL-1452' }}. All selected candidates receive official employment contracts and BMET clearance prior to flight departure.</p>
+                <p class="text-slate-300 leading-relaxed">This job circular is issued under BMET Govt. License {{ $siteSettings['bmet_license_no'] }}. All selected candidates receive official employment contracts and BMET clearance prior to flight departure.</p>
             </div>
+            @endif
         </div>
     </div>
 
