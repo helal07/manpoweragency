@@ -75,24 +75,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
-                fn (): string => Blade::render('
-                    <div style="margin-bottom: 1.5rem; padding: 1.25rem; border-radius: 1.25rem; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(217, 119, 6, 0.5); text-align: center; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.35);">
-                        <div style="position: absolute; inset: 0; background-image: url(\'/images/agency_employees.png\'); background-size: cover; background-position: center; opacity: 0.18; pointer-events: none;"></div>
-                        
-                        <!-- Dual-Tone Navy, Gold & White Brand Name -->
-                        <div style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.4rem; line-height: 1.3;">
-                            <span style="color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.6);">GLOBAL MANPOWER </span>
-                            <span style="color: #f59e0b; text-shadow: 0 0 12px rgba(245, 158, 11, 0.6);">OVERSEAS LTD.</span>
-                        </div>
-
-                        <!-- Gold & Navy License Badge -->
-                        <div style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.875rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background-color: #020617; color: #fbbf24; border: 1px solid #d97706; box-shadow: 0 2px 4px rgba(0,0,0,0.4); margin-bottom: 0.35rem;">
-                            <span style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></span>
-                            Govt. License: RL-1452
-                        </div>
-                        <div style="font-size: 0.75rem; font-weight: 600; color: #94a3b8;">Government Approved Overseas Recruiting Agency</div>
-                    </div>
-                ')
+                fn () => view('filament.auth-login-banner')
             )
             ->navigationGroups([
                 'Website Content',
