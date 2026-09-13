@@ -39,6 +39,19 @@ class ApplicationController extends Controller
         
         $circular = JobCircular::with('customFields')->findOrFail($request->job_circular_id);
 
+        // Ensure applicant has completed required profile information
+        $applicant = auth()->user();
+        $missingFields = [];
+        if (empty($applicant->fathers_name)) $missingFields[] = "Father's Name";
+        if (empty($applicant->mobile_no) && empty($applicant->phone)) $missingFields[] = "Mobile Number";
+        if (empty($applicant->current_address)) $missingFields[] = "Present Address";
+        if (empty($applicant->permanent_address)) $missingFields[] = "Permanent Address";
+        if (empty($applicant->nid_passport)) $missingFields[] = "NID / Passport No";
+
+        if (!empty($missingFields)) {
+            return back()->with('error', 'Please complete your profile details before applying. Missing: ' . implode(', ', $missingFields));
+        }
+
         // Ensure they haven't applied already
         $existing = JobApplication::where('applicant_id', auth()->id())
             ->where('job_circular_id', $circular->id)

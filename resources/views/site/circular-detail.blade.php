@@ -234,12 +234,38 @@
 
     {{-- Application Modal --}}
     @auth('web')
+        @php
+            $applicant = auth()->user();
+            $profileChecklist = [
+                'fathers_name' => "Father's Name",
+                'mobile_no' => 'Mobile Number',
+                'current_address' => 'Present Address',
+                'permanent_address' => 'Permanent Address',
+                'nid_passport' => 'NID / Passport No',
+            ];
+            $missingProfileFields = [];
+            foreach ($profileChecklist as $fKey => $fLabel) {
+                if (empty($applicant->{$fKey})) {
+                    if ($fKey === 'mobile_no' && !empty($applicant->phone)) {
+                        continue;
+                    }
+                    $missingProfileFields[] = $fLabel;
+                }
+            }
+            $isProfileComplete = empty($missingProfileFields);
+            $totalFieldsCount = count($profileChecklist);
+            $filledFieldsCount = $totalFieldsCount - count($missingProfileFields);
+            $profilePercent = round(($filledFieldsCount / $totalFieldsCount) * 100);
+        @endphp
+
         <div
             x-show="applyModalOpen"
             x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8"
+            class="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
             style="display: none;"
             @keydown.escape.window="applyModalOpen = false"
+            role="dialog"
+            aria-modal="true"
         >
             {{-- Backdrop --}}
             <div
@@ -250,197 +276,367 @@
                 x-transition:leave="ease-in duration-200"
                 x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
-                class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
+                class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs transition-opacity"
                 @click="applyModalOpen = false"
             ></div>
 
-            {{-- Modal Content --}}
-            <div
-                x-show="applyModalOpen"
-                x-transition:enter="ease-out duration-300"
-                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                x-transition:leave="ease-in duration-200"
-                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto z-10 border border-slate-200 p-6 sm:p-8 space-y-6"
-                @click.stop
-            >
-                {{-- Header --}}
-                <div class="flex items-start justify-between border-b border-slate-100 pb-4">
-                    <div>
-                        <div class="text-xs font-bold text-blue-600 uppercase tracking-wider">Job Application</div>
-                        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">{{ $circular->title }}</h2>
-                        <div class="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                            <span>Destination: <strong class="text-slate-700">{{ $circular->country }}</strong></span>
-                            <span>•</span>
-                            <span>Salary: <strong class="text-slate-700">{{ $circular->salary_range }}</strong></span>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        @click="applyModalOpen = false"
-                        class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-
-                {{-- Applicant Snapshot Box --}}
-                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs text-slate-600 flex items-center justify-between gap-4">
-                    <div>
-                        <div class="font-bold text-slate-800 text-sm">Applying as: {{ auth()->user()->name }}</div>
-                        <div class="text-slate-500 mt-0.5">{{ auth()->user()->email }} · {{ auth()->user()->mobile_no ?? 'No mobile set' }}</div>
-                    </div>
-                    <a href="{{ route('profile.edit') }}" target="_blank" class="text-blue-600 font-semibold hover:underline shrink-0 text-xs">
-                        Edit Profile &rarr;
-                    </a>
-                </div>
-
-                {{-- Application Form --}}
-                <form action="{{ route('applications.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-                    @csrf
-                    <input type="hidden" name="job_circular_id" value="{{ $circular->id }}">
-
-                    @if($circular->customFields->count() > 0)
-                        <div class="space-y-4">
-                            <div class="border-b border-slate-100 pb-2">
-                                <h3 class="text-sm font-bold text-slate-900">Position Requirements & Documents</h3>
-                                <p class="text-xs text-slate-500">Please provide the specific details requested for this circular.</p>
+            {{-- Dialog Container: sleek, compact, and perfectly centered --}}
+            <div class="flex min-h-full items-end sm:items-center justify-center p-0 sm:p-4 text-center sm:text-left">
+                <div
+                    x-show="applyModalOpen"
+                    x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-8 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-8 sm:translate-y-0 sm:scale-95"
+                    class="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-xl my-0 sm:my-8 border border-slate-200/80 flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden text-left"
+                    @click.stop
+                >
+                    {{-- Executive Navy/Indigo Header --}}
+                    <div class="sticky top-0 z-20 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white px-5 py-4 sm:px-6 sm:py-5 flex items-start justify-between border-b border-slate-800 shadow-md">
+                        <div class="pr-2 space-y-1">
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                                <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span>Official Job Application</span>
                             </div>
-
-                            @foreach($circular->customFields as $field)
-                                @php
-                                    $isRequired = (bool) ($field->pivot->is_required ?? false);
-                                    $fieldKey = "custom_fields.{$field->id}";
-                                    $oldVal = old("custom_fields.{$field->id}");
-                                @endphp
-
-                                <div class="space-y-1.5">
-                                    <label class="block text-xs font-bold text-slate-700">
-                                        {{ $field->label }}
-                                        @if($isRequired)
-                                            <span class="text-rose-500">*</span>
-                                        @else
-                                            <span class="text-slate-400 font-normal">(Optional)</span>
-                                        @endif
-                                    </label>
-
-                                    @if($field->help_text)
-                                        <p class="text-[11px] text-slate-500">{{ $field->help_text }}</p>
-                                    @endif
-
-                                    {{-- Render by type --}}
-                                    @if($field->type === 'text')
-                                        <input
-                                            type="text"
-                                            name="custom_fields[{{ $field->id }}]"
-                                            value="{{ $oldVal }}"
-                                            placeholder="{{ $field->placeholder ?? 'Enter ' . $field->label }}"
-                                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error($fieldKey) border-rose-500 @enderror"
-                                            {{ $isRequired ? 'required' : '' }}
-                                        >
-                                    @elseif($field->type === 'textarea')
-                                        <textarea
-                                            name="custom_fields[{{ $field->id }}]"
-                                            rows="3"
-                                            placeholder="{{ $field->placeholder ?? 'Enter ' . $field->label }}"
-                                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error($fieldKey) border-rose-500 @enderror"
-                                            {{ $isRequired ? 'required' : '' }}
-                                        >{{ $oldVal }}</textarea>
-                                    @elseif($field->type === 'number')
-                                        <input
-                                            type="number"
-                                            name="custom_fields[{{ $field->id }}]"
-                                            value="{{ $oldVal }}"
-                                            placeholder="{{ $field->placeholder ?? '0' }}"
-                                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error($fieldKey) border-rose-500 @enderror"
-                                            {{ $isRequired ? 'required' : '' }}
-                                        >
-                                    @elseif($field->type === 'date')
-                                        <input
-                                            type="date"
-                                            name="custom_fields[{{ $field->id }}]"
-                                            value="{{ $oldVal }}"
-                                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error($fieldKey) border-rose-500 @enderror"
-                                            {{ $isRequired ? 'required' : '' }}
-                                        >
-                                    @elseif($field->type === 'select')
-                                        <select
-                                            name="custom_fields[{{ $field->id }}]"
-                                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error($fieldKey) border-rose-500 @enderror"
-                                            {{ $isRequired ? 'required' : '' }}
-                                        >
-                                            <option value="">-- Select option --</option>
-                                            @if(is_array($field->options))
-                                                @foreach($field->options as $opt)
-                                                    <option value="{{ $opt }}" {{ $oldVal === $opt ? 'selected' : '' }}>{{ $opt }}</option>
-                                                @endforeach
-                                            @endif
-                                        </select>
-                                    @elseif($field->type === 'checkbox')
-                                        <label class="inline-flex items-center gap-2 cursor-pointer mt-1">
-                                            <input
-                                                type="checkbox"
-                                                name="custom_fields[{{ $field->id }}]"
-                                                value="1"
-                                                class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                                                {{ $oldVal ? 'checked' : '' }}
-                                            >
-                                            <span class="text-xs font-semibold text-slate-700">Yes / Confirm</span>
-                                        </label>
-                                    @elseif($field->type === 'file')
-                                        <div class="mt-1">
-                                            <input
-                                                type="file"
-                                                name="custom_fields[{{ $field->id }}]"
-                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
-                                                class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer border border-slate-200 rounded-xl p-1 @error($fieldKey) border-rose-500 @enderror"
-                                                {{ $isRequired ? 'required' : '' }}
-                                            >
-                                            <p class="text-[10px] text-slate-400 mt-1">Accepted: PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
-                                        </div>
-                                    @endif
-
-                                    @error($fieldKey)
-                                        <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                            @endforeach
+                            <h2 class="text-base sm:text-lg font-extrabold text-white leading-snug">{{ $circular->title }}</h2>
+                            <div class="flex items-center flex-wrap gap-2 text-xs text-slate-300 pt-0.5">
+                                <span class="inline-flex items-center gap-1 font-semibold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    {{ $circular->country }}
+                                </span>
+                                <span class="text-slate-400 font-medium">Salary: <strong class="text-white">{{ $circular->salary_range }}</strong></span>
+                            </div>
                         </div>
-                    @endif
-
-                    {{-- Cover Letter / Message --}}
-                    <div class="space-y-1.5">
-                        <label class="block text-xs font-bold text-slate-700">
-                            Cover Letter / Remarks <span class="text-slate-400 font-normal">(Optional)</span>
-                        </label>
-                        <textarea
-                            name="cover_letter"
-                            rows="3"
-                            placeholder="Write any note, past experience, or message to the recruitment team..."
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >{{ old('cover_letter') }}</textarea>
-                    </div>
-
-                    {{-- Submit & Cancel Buttons --}}
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                         <button
                             type="button"
                             @click="applyModalOpen = false"
-                            class="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                            class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
+                            aria-label="Close"
                         >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors shadow-md flex items-center gap-2 cursor-pointer"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Submit Application
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
-                </form>
+
+                    {{-- Form with scrollable body and sticky action bar --}}
+                    <form action="{{ route('applications.store') }}" method="POST" enctype="multipart/form-data" class="flex flex-col flex-1 overflow-hidden">
+                        @csrf
+                        <input type="hidden" name="job_circular_id" value="{{ $circular->id }}">
+
+                        {{-- Smoothly Scrollable Body --}}
+                        <div class="overflow-y-auto flex-1 px-5 py-5 sm:px-6 sm:py-6 space-y-5 overscroll-contain bg-slate-50/40" style="-webkit-overflow-scrolling: touch;">
+
+                            @if(!$isProfileComplete)
+                                {{-- Lucrative Profile Alert & Progress Card --}}
+                                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-amber-300 shadow-sm border-l-4 border-l-amber-500 space-y-3.5">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 font-bold">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-sm font-bold text-slate-900">Profile Incomplete</h3>
+                                                <p class="text-xs text-slate-500">100% verified profile required to apply</p>
+                                            </div>
+                                        </div>
+                                        <span class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-200">
+                                            {{ $profilePercent }}% Complete
+                                        </span>
+                                    </div>
+
+                                    {{-- Progress Bar --}}
+                                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+                                        <div class="bg-gradient-to-r from-amber-500 to-orange-500 h-full rounded-full transition-all duration-500" style="width: {{ $profilePercent }}%"></div>
+                                    </div>
+
+                                    <div class="bg-slate-50 rounded-xl p-3 border border-slate-200/80 space-y-2">
+                                        <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Required fields missing from your profile:</div>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            @foreach($missingProfileFields as $field)
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                                    <svg class="w-3 h-3 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    {{ $field }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    </div>
+
+                                    <a href="{{ route('profile.edit') }}" target="_blank" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs sm:text-sm font-bold transition-all shadow-md shadow-blue-600/20 hover:shadow-lg">
+                                        <span>Complete Your Profile Now</span>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    </a>
+                                </div>
+                            @endif
+
+                            {{-- Applicant Information Summary (Micro-Cards Layout) --}}
+                            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3.5">
+                                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                        </div>
+                                        <h3 class="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wide">Applicant Information Record</h3>
+                                    </div>
+                                    <a href="{{ route('profile.edit') }}" target="_blank" class="text-blue-600 hover:text-blue-700 font-semibold text-xs inline-flex items-center gap-1 hover:underline">
+                                        Edit &rarr;
+                                    </a>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                                    <div class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70">
+                                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Applicant Name</span>
+                                        <span class="font-bold text-slate-900 text-xs sm:text-sm">{{ $applicant->name }}</span>
+                                    </div>
+
+                                    <div class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70">
+                                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Father's Name</span>
+                                        @if($applicant->fathers_name)
+                                            <span class="font-semibold text-slate-800">{{ $applicant->fathers_name }}</span>
+                                        @else
+                                            <span class="text-rose-500 font-medium italic">Missing</span>
+                                        @endif
+                                    </div>
+
+                                    <div class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70">
+                                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Mother's Name</span>
+                                        <span class="font-medium text-slate-700">{{ $applicant->mothers_name ?: 'Not provided' }}</span>
+                                    </div>
+
+                                    <div class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70">
+                                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Mobile Number</span>
+                                        <span class="font-semibold text-slate-800">{{ $applicant->mobile_no ?: ($applicant->phone ?: 'Not provided') }}</span>
+                                    </div>
+
+                                    <div class="sm:col-span-2 bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70">
+                                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Present Address</span>
+                                        @if($applicant->current_address)
+                                            <span class="font-semibold text-slate-800 leading-relaxed">{{ $applicant->current_address }}</span>
+                                        @else
+                                            <span class="text-rose-500 font-medium italic">Missing</span>
+                                        @endif
+                                    </div>
+
+                                    <div class="sm:col-span-2 bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70">
+                                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Permanent Address</span>
+                                        @if($applicant->permanent_address)
+                                            <span class="font-semibold text-slate-800 leading-relaxed">{{ $applicant->permanent_address }}</span>
+                                        @else
+                                            <span class="text-rose-500 font-medium italic">Missing</span>
+                                        @endif
+                                    </div>
+
+                                    <div class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70">
+                                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Email</span>
+                                        <span class="font-semibold text-slate-800 truncate block">{{ $applicant->email }}</span>
+                                    </div>
+
+                                    <div class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70">
+                                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">NID / Passport No</span>
+                                        @if($applicant->nid_passport)
+                                            <span class="font-semibold text-slate-800">{{ $applicant->nid_passport }}</span>
+                                        @else
+                                            <span class="text-rose-500 font-medium italic">Missing</span>
+                                        @endif
+                                    </div>
+
+                                    <div class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70">
+                                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Date of Birth &amp; Gender</span>
+                                        <span class="font-medium text-slate-800">
+                                            {{ $applicant->date_of_birth ? $applicant->date_of_birth->format('d M, Y') : 'N/A' }} 
+                                            ({{ ucfirst($applicant->gender ?: 'N/A') }})
+                                        </span>
+                                    </div>
+
+                                    <div class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70">
+                                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Master Resume / CV</span>
+                                        @if($applicant->getFirstMediaUrl('resume'))
+                                            <a href="{{ $applicant->getFirstMediaUrl('resume') }}" target="_blank" class="text-blue-600 font-bold hover:underline inline-flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                                <span>View Attached CV</span>
+                                            </a>
+                                        @else
+                                            <span class="text-slate-400 italic">No resume attached</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Position Specific Requirements & Documents (Dynamic Custom Fields) --}}
+                            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
+                                <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                                    <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wide">Position Requirements &amp; Documents</h3>
+                                        <p class="text-[11px] text-slate-500">Specific requirements for this circular</p>
+                                    </div>
+                                </div>
+
+                                @if($circular->customFields->count() > 0)
+                                    <div class="space-y-3.5">
+                                        @foreach($circular->customFields as $field)
+                                            @php
+                                                $isRequired = (bool) ($field->pivot->is_required ?? false);
+                                                $fieldKey = "custom_fields.{$field->id}";
+                                                $oldVal = old("custom_fields.{$field->id}");
+                                            @endphp
+
+                                            <div class="space-y-1.5">
+                                                <label class="block text-xs font-bold text-slate-800">
+                                                    {{ $field->label }}
+                                                    @if($isRequired)
+                                                        <span class="text-rose-500 font-extrabold">*</span>
+                                                    @else
+                                                        <span class="text-slate-400 font-normal">(Optional)</span>
+                                                    @endif
+                                                </label>
+
+                                                @if($field->help_text)
+                                                    <p class="text-[11px] text-slate-500">{{ $field->help_text }}</p>
+                                                @endif
+
+                                                @if($field->type === 'text')
+                                                    <input
+                                                        type="text"
+                                                        name="custom_fields[{{ $field->id }}]"
+                                                        value="{{ $oldVal }}"
+                                                        placeholder="{{ $field->placeholder ?? 'Enter ' . $field->label }}"
+                                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white @error($fieldKey) border-rose-500 @enderror"
+                                                        {{ $isRequired ? 'required' : '' }}
+                                                    >
+                                                @elseif($field->type === 'textarea')
+                                                    <textarea
+                                                        name="custom_fields[{{ $field->id }}]"
+                                                        rows="3"
+                                                        placeholder="{{ $field->placeholder ?? 'Enter ' . $field->label }}"
+                                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white @error($fieldKey) border-rose-500 @enderror"
+                                                        {{ $isRequired ? 'required' : '' }}
+                                                    >{{ $oldVal }}</textarea>
+                                                @elseif($field->type === 'number')
+                                                    <input
+                                                        type="number"
+                                                        name="custom_fields[{{ $field->id }}]"
+                                                        value="{{ $oldVal }}"
+                                                        placeholder="{{ $field->placeholder ?? '0' }}"
+                                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white @error($fieldKey) border-rose-500 @enderror"
+                                                        {{ $isRequired ? 'required' : '' }}
+                                                    >
+                                                @elseif($field->type === 'date')
+                                                    <input
+                                                        type="date"
+                                                        name="custom_fields[{{ $field->id }}]"
+                                                        value="{{ $oldVal }}"
+                                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white @error($fieldKey) border-rose-500 @enderror"
+                                                        {{ $isRequired ? 'required' : '' }}
+                                                    >
+                                                @elseif($field->type === 'select')
+                                                    <select
+                                                        name="custom_fields[{{ $field->id }}]"
+                                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white @error($fieldKey) border-rose-500 @enderror"
+                                                        {{ $isRequired ? 'required' : '' }}
+                                                    >
+                                                        <option value="">-- Select option --</option>
+                                                        @if(is_array($field->options))
+                                                            @foreach($field->options as $opt)
+                                                                <option value="{{ $opt }}" {{ $oldVal === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                            @endforeach
+                                                        @endif
+                                                    </select>
+                                                @elseif($field->type === 'checkbox')
+                                                    <label class="inline-flex items-center gap-2 cursor-pointer mt-1">
+                                                        <input
+                                                            type="checkbox"
+                                                            name="custom_fields[{{ $field->id }}]"
+                                                            value="1"
+                                                            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                                                            {{ $oldVal ? 'checked' : '' }}
+                                                        >
+                                                        <span class="text-xs font-semibold text-slate-700">Yes / Confirm requirement</span>
+                                                    </label>
+                                                @elseif($field->type === 'file')
+                                                    <div class="mt-1">
+                                                        <input
+                                                            type="file"
+                                                            name="custom_fields[{{ $field->id }}]"
+                                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                                            class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer border border-slate-200 rounded-xl p-1 bg-slate-50/50 @error($fieldKey) border-rose-500 @enderror"
+                                                            {{ $isRequired ? 'required' : '' }}
+                                                        >
+                                                        <p class="text-[10px] text-slate-400 mt-1">PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
+                                                    </div>
+                                                @endif
+
+                                                @error($fieldKey)
+                                                    <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        <span>No extra circular-specific documents required. Your verified profile credentials and resume will be submitted.</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Cover Letter / Remarks --}}
+                            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-2">
+                                <label class="block text-xs font-bold text-slate-800">
+                                    Cover Letter / Remarks <span class="text-slate-400 font-normal">(Optional)</span>
+                                </label>
+                                <textarea
+                                    name="cover_letter"
+                                    rows="2"
+                                    placeholder="Add any experience note, passport readiness, or message..."
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                >{{ old('cover_letter') }}</textarea>
+                            </div>
+
+                            {{-- Executive Dark Bengali Advisory Box --}}
+                            <div class="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 text-white p-4 sm:p-5 border border-slate-800 shadow-md space-y-1.5">
+                                <div class="font-bold flex items-center gap-2 text-amber-400 text-xs sm:text-sm">
+                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <span>বিঃদ্রঃ গুরুত্বপূর্ণ নির্দেশনা</span>
+                                </div>
+                                <p class="text-xs text-slate-300 leading-relaxed">
+                                    সব পিডিএফ বা ডকুমেন্টস পরিষ্কারভাবে আপলোড করতে হবে। আবেদন পূরণ করার পর সাবমিট দেওয়ার পূর্বে আবেদন ভালোভাবে যাচাই করুন। ভুল বা অসত্য আবেদন বাতিল বলিয়া গণ্য হইবে।
+                                </p>
+                            </div>
+
+                        </div>
+
+                        {{-- Sticky Modal Action Footer --}}
+                        <div class="sticky bottom-0 z-20 bg-white border-t border-slate-200 px-5 py-3.5 sm:px-6 sm:py-4 flex items-center justify-between gap-3 shadow-lg">
+                            <button
+                                type="button"
+                                @click="applyModalOpen = false"
+                                class="px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+
+                            @if($isProfileComplete)
+                                <button
+                                    type="submit"
+                                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs sm:text-sm font-bold transition-all shadow-md shadow-blue-600/20 hover:shadow-lg flex items-center gap-2 cursor-pointer"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Submit Application
+                                </button>
+                            @else
+                                <a
+                                    href="{{ route('profile.edit') }}"
+                                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs sm:text-sm font-bold transition-all shadow-md shadow-blue-600/20 hover:shadow-lg flex items-center gap-1.5"
+                                >
+                                    <span>Complete Profile &rarr;</span>
+                                </a>
+                            @endif
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     @endauth
