@@ -235,37 +235,65 @@ class SmsService
             return [
                 'success' => false,
                 'balance' => null,
-                'message' => 'Please configure your SMS API Token in Settings.',
+                'message' => 'Please configure your SMS API Token in Settings first.',
             ];
         }
 
-        try {
-            // Standard Greenweb balance check: ?token=XYZ&balance
-            $balanceUrl = str_replace(['/api.php', 'api.php'], ['/gwc.php', 'gwc.php'], $apiUrl);
-            $response = Http::timeout(10)->get($balanceUrl, [
-                'token' => $apiToken,
-                'balance' => 'true',
-            ]);
+        // Greenweb official balance endpoint is g_api.php
+        $baseUrl = preg_replace('/(\/api\.php|\/g_api\.php|\/api)?$/i', '', $apiUrl);
+        if (empty($baseUrl)) {
+            $baseUrl = 'http://api.greenweb.com.bd';
+        }
 
-            if ($response->successful()) {
-                return [
-                    'success' => true,
-                    'balance' => trim($response->body()),
-                    'message' => 'Balance checked successfully.',
-                ];
+        $endpointsToTry = [
+            $baseUrl . '/g_api.php',
+            'http://api.greenweb.com.bd/g_api.php',
+            'http://api.bdbulksms.net/g_api.php',
+            $baseUrl . '/api.php',
+        ];
+
+        $lastError = 'Unable to connect to balance API.';
+
+        foreach ($endpointsToTry as $endpoint) {
+            try {
+                $response = Http::timeout(10)->get($endpoint, [
+                    'token' => $apiToken,
+                    'balance' => 'true',
+                    'json' => '',
+                ]);
+
+                if ($response->successful()) {
+                    $body = trim($response->body());
+                    if (!empty($body) && stripos($body, '404') === false && stripos($body, 'not found') === false) {
+                        // Check if JSON response
+                        $json = json_decode($body, true);
+                        if (is_array($json)) {
+                            // Extract balance or message
+                            $balanceVal = $json[0]['balance'] ?? $json['balance'] ?? ($json[0]['response'] ?? json_encode($json));
+                            return [
+                                'success' => true,
+                                'balance' => (string) $balanceVal,
+                                'message' => 'Balance fetched successfully.',
+                            ];
+                        }
+
+                        // Plain text / integer balance response (e.g. "540" or "Balance: 540")
+                        return [
+                            'success' => true,
+                            'balance' => strip_tags($body),
+                            'message' => 'Balance checked successfully.',
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                $lastError = $e->getMessage();
             }
-
-            return [
-                'success' => false,
-                'balance' => null,
-                'message' => 'Unable to fetch balance: ' . $response->body(),
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'balance' => null,
-                'message' => 'Error querying balance: ' . $e->getMessage(),
-            ];
         }
+
+        return [
+            'success' => false,
+            'balance' => null,
+            'message' => 'Unable to fetch balance from gateway. (' . $lastError . ')',
+        ];
     }
 }

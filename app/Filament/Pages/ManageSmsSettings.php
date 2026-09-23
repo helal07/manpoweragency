@@ -61,8 +61,18 @@ class ManageSmsSettings extends Page implements HasForms
                 ->label('Check SMS Balance')
                 ->icon('heroicon-o-credit-card')
                 ->color('info')
-                ->action(function (SmsService $smsService) {
-                    $result = $smsService->checkBalance();
+                ->action(function (SmsSettings $settings) {
+                    $formState = $this->form->getState();
+                    if (!empty($formState['api_token'])) {
+                        $settings->api_token = $formState['api_token'];
+                    }
+                    if (!empty($formState['api_url'])) {
+                        $settings->api_url = $formState['api_url'];
+                    }
+
+                    $service = new SmsService($settings);
+                    $result = $service->checkBalance();
+
                     if ($result['success']) {
                         Notification::make()
                             ->title('SMS Account Balance')
@@ -75,6 +85,7 @@ class ManageSmsSettings extends Page implements HasForms
                             ->title('SMS Balance Check')
                             ->body($result['message'])
                             ->warning()
+                            ->persistent()
                             ->send();
                     }
                 }),
@@ -96,8 +107,20 @@ class ManageSmsSettings extends Page implements HasForms
                         ->required()
                         ->rows(3),
                 ])
-                ->action(function (array $data, SmsService $smsService) {
-                    $result = $smsService->send(
+                ->action(function (array $data, SmsSettings $settings) {
+                    $formState = $this->form->getState();
+                    if (!empty($formState['api_token'])) {
+                        $settings->api_token = $formState['api_token'];
+                    }
+                    if (!empty($formState['api_url'])) {
+                        $settings->api_url = $formState['api_url'];
+                    }
+                    if (isset($formState['is_enabled'])) {
+                        $settings->is_enabled = (bool) $formState['is_enabled'];
+                    }
+
+                    $service = new SmsService($settings);
+                    $result = $service->send(
                         to: $data['test_phone'],
                         message: $data['test_message'],
                         type: 'test'
@@ -115,9 +138,9 @@ class ManageSmsSettings extends Page implements HasForms
                                 ->title('Live Test SMS Sent Successfully!')
                                 ->body('Gateway Response: ' . $result['response'])
                                 ->success()
+                                ->persistent()
                                 ->send();
                         }
-                    } else {
                         Notification::make()
                             ->title('SMS Dispatch Failed')
                             ->body('Error / Response: ' . ($result['response'] ?? 'Unknown gateway error.'))
