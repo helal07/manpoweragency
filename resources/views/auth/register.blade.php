@@ -25,18 +25,27 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2 text-xs text-red-600" />
         </div>
 
-        <!-- Phone Number -->
+        <!-- Phone Number (Required for SMS OTP Verification) -->
         <div class="mt-4">
-            <label for="phone" class="block text-xs font-bold uppercase tracking-wider text-[#0F172A] mb-1">Phone Number</label>
-            <input id="phone" type="text" name="phone" value="{{ old('phone') }}"
-                placeholder="+880 1700-000000"
-                class="w-full px-4 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] text-[#0F172A] placeholder-slate-400 focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20 text-sm transition-all shadow-sm">
+            <label for="phone" class="block text-xs font-bold uppercase tracking-wider text-[#0F172A] mb-1">
+                Mobile Number <span class="text-red-500">*</span>
+                <span class="text-[10px] text-[#64748B] font-normal lowercase">(for SMS OTP verification)</span>
+            </label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-xs font-bold text-slate-500">
+                    +88
+                </div>
+                <input id="phone" type="tel" name="phone" value="{{ old('phone') }}" required
+                    placeholder="01712345678"
+                    class="w-full pl-12 pr-4 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] text-[#0F172A] placeholder-slate-400 focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20 text-sm transition-all shadow-sm font-medium">
+            </div>
+            <p class="text-[11px] text-[#64748B] mt-1">A 6-digit OTP code will be sent to this mobile number via SMS to verify your account.</p>
             <x-input-error :messages="$errors->get('phone')" class="mt-2 text-xs text-red-600" />
         </div>
 
         <!-- NID / Passport No. -->
         <div class="mt-4">
-            <label for="nid_passport" class="block text-xs font-bold uppercase tracking-wider text-[#0F172A] mb-1">NID or Passport No.</label>
+            <label for="nid_passport" class="block text-xs font-bold uppercase tracking-wider text-[#0F172A] mb-1">NID or Passport No. <span class="text-xs text-slate-400 font-normal">(Optional)</span></label>
             <input id="nid_passport" type="text" name="nid_passport" value="{{ old('nid_passport') }}"
                 placeholder="e.g. A01234567 / 1995123456"
                 class="w-full px-4 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] text-[#0F172A] placeholder-slate-400 focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20 text-sm transition-all shadow-sm">

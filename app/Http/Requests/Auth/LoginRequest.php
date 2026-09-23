@@ -28,7 +28,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'login' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -42,11 +42,55 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        $loginInput = $this->input('login');
+        $fieldType = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+
+        // Clean phone number format if phone was entered
+        if ($fieldType === 'phone') {
+            $cleaned = preg_replace('/[^\d]/', '', $loginInput);
+            if (str_starts_with($cleaned, '880') && strlen($cleaned) === 13) {
+                $cleaned = substr($cleaned, 2);
+            }
+            $loginInput = $cleaned;
+        }
+
+        $credentials = [
+            $fieldType => $loginInput,
+            'password' => $this->input('password'),
+        ];
+
+        if (! Auth::guard('web')->attempt($credentials, $this->boolean('remember'))) {
+            // Also try matching 'mobile_no' if phone field
+            if ($fieldType === 'phone') {
+                $credentialsAlt = [
+                    'mobile_no' => $loginInput,
+                    'password' => $this->input('password'),
+                ];
+                if (! Auth::guard('web')->attempt($credentialsAlt, $this->boolean('remember'))) {
+                    RateLimiter::hit($this->throttleKey());
+
+                    throw ValidationException::withMessages([
+                        'login' => trans('auth.failed'),
+                    ]);
+                }
+            } else {
+                RateLimiter::hit($this->throttleKey());
+
+                throw ValidationException::withMessages([
+                    'login' => trans('auth.failed'),
+                ]);
+            }
+        }
+
+        // Check if phone is verified
+        $user = Auth::guard('web')->user();
+        if ($user && empty($user->phone_verified_at)) {
+            session(['otp_verify_applicant_id' => $user->id]);
+            app(\App\Services\SmsService::class)->sendOtp($user);
+            Auth::guard('web')->logout();
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'login' => 'Your phone number is not verified yet. A new OTP has been sent to your mobile phone. Please verify your account.',
             ]);
         }
 
@@ -81,6 +125,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
     }
 }

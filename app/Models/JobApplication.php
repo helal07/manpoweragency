@@ -17,6 +17,17 @@ class JobApplication extends Model
         'status',
         'cover_letter',
         'notes',
+        'interview_date',
+        'interview_time',
+        'interview_venue',
+        'interview_instructions',
+        'interview_called_at',
+        'admit_card_token',
+    ];
+
+    protected $casts = [
+        'interview_date' => 'date',
+        'interview_called_at' => 'datetime',
     ];
 
     public function applicant(): BelongsTo
@@ -37,5 +48,10 @@ class JobApplication extends Model
     public function customFieldValues(): HasMany
     {
         return $this->hasMany(JobApplicationFieldValue::class);
+    }
+
+    public function smsLogs(): HasMany
+    {
+        return $this->hasMany(SmsLog::class);
     }
 }

@@ -330,6 +330,10 @@ Route::get('/notices', function () {
     return view('site.notices', compact('notices'));
 })->name('notices.index');
 
+// Public & Applicant Interview Slip / Admit Card Route
+Route::get('/interview-card/{token}', [\App\Http\Controllers\Site\InterviewCardController::class, 'show'])
+    ->name('interview-card.show');
+
 // Applicant Auth Dashboard
 Route::middleware(['auth:web'])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Applicant\DashboardController::class, 'index'])->name('dashboard');

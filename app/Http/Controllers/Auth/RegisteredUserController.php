@@ -33,24 +33,54 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.Applicant::class],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:20'],
             'nid_passport' => ['nullable', 'string', 'max:50'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        $smsService = app(\App\Services\SmsService::class);
+        $formattedPhone = $smsService->formatNumber($request->phone);
+
+        if (!$smsService->isValidBdNumber($formattedPhone)) {
+            return back()->withInput()->withErrors([
+                'phone' => 'Please provide a valid 11-digit Bangladeshi mobile number (e.g. 017XXXXXXXX).',
+            ]);
+        }
+
+        // Check if phone already registered
+        $existingPhone = Applicant::where('phone', $formattedPhone)
+            ->orWhere('mobile_no', $formattedPhone)
+            ->first();
+
+        if ($existingPhone) {
+            return back()->withInput()->withErrors([
+                'phone' => 'This mobile number is already registered. Please sign in or use another number.',
+            ]);
+        }
+
         $applicant = Applicant::create([
             'name' => $request->name,
             'email' => $request->email,
-            'phone' => $request->phone,
+            'phone' => $formattedPhone,
+            'mobile_no' => $formattedPhone,
             'nid_passport' => $request->nid_passport,
             'password' => Hash::make($request->password),
-            'email_verified_at' => now(),
+            'phone_verified_at' => null,
+            'email_verified_at' => null,
         ]);
 
         event(new Registered($applicant));
 
-        Auth::guard('web')->login($applicant);
+        // Generate and send OTP via SMS Gateway
+        $smsResult = $smsService->sendOtp($applicant);
 
-        return redirect(route('dashboard', absolute: false));
+        session(['otp_verify_applicant_id' => $applicant->id]);
+
+        $msg = 'Account created! Please enter the 6-digit OTP code sent to your mobile phone (' . $formattedPhone . ') to activate your account.';
+        if (!empty($smsResult['simulated'])) {
+            $msg .= ' [Simulation Mode: OTP is ' . $applicant->otp_code . ']';
+        }
+
+        return redirect()->route('otp.verify.show')->with('status', $msg);
     }
 }

@@ -27,7 +27,9 @@ class Applicant extends Authenticatable implements HasMedia
         'current_address',
         'permanent_address',
         'linkedin_url',
-        'resume_path',
+        'phone_verified_at',
+        'otp_code',
+        'otp_expires_at',
         // Profile details
         'fathers_name',
         'mothers_name',
@@ -74,6 +76,8 @@ class Applicant extends Authenticatable implements HasMedia
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
+            'otp_expires_at' => 'datetime',
             'password' => 'hashed',
             'date_of_birth' => 'date',
             'passport_expiry' => 'date',
@@ -82,6 +86,11 @@ class Applicant extends Authenticatable implements HasMedia
             'hsc_year' => 'integer',
             'experience_years' => 'integer',
         ];
+    }
+
+    public function isPhoneVerified(): bool
+    {
+        return !empty($this->phone_verified_at);
     }
     
     public function jobApplications(): HasMany

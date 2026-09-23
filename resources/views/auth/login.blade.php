@@ -26,12 +26,13 @@
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <!-- Email Address -->
+        <!-- Email Address or Mobile Number -->
         <div>
-            <label for="email" class="block text-xs font-bold uppercase tracking-wider text-[#0F172A] mb-1">Email Address</label>
-            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username"
-                placeholder="applicant@example.com"
+            <label for="login" class="block text-xs font-bold uppercase tracking-wider text-[#0F172A] mb-1">Email Address or Mobile Number</label>
+            <input id="login" type="text" name="login" value="{{ old('login') }}" required autofocus autocomplete="username"
+                placeholder="e.g. 01712345678 or applicant@example.com"
                 class="w-full px-4 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] text-[#0F172A] placeholder-slate-400 focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20 text-sm transition-all shadow-sm">
+            <x-input-error :messages="$errors->get('login')" class="mt-2 text-xs text-red-600" />
             <x-input-error :messages="$errors->get('email')" class="mt-2 text-xs text-red-600" />
         </div>
 

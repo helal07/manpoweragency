@@ -5,10 +5,13 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\JobApplicationResource\Pages;
 use App\Models\CustomField;
 use App\Models\JobApplication;
+use App\Services\SmsService;
+use App\Settings\SiteSettings;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -17,6 +20,8 @@ use Filament\Schemas\Schema;
 use Filament\Support\Enums\TextSize;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Str;
 
 class JobApplicationResource extends Resource
 {
@@ -45,7 +50,7 @@ class JobApplicationResource extends Resource
     {
         return $schema
             ->components([
-                \Filament\Schemas\Components\Section::make('Application Status & Review')
+                Section::make('Application Status & Review')
                     ->schema([
                         Forms\Components\Select::make('status')
                             ->label('Application Status')
@@ -63,7 +68,30 @@ class JobApplicationResource extends Resource
                         Forms\Components\Textarea::make('notes')
                             ->label('Internal Admin Notes')
                             ->placeholder('Add internal comments, interview remarks, or status notes...')
-                            ->rows(4),
+                            ->rows(3),
+                    ]),
+
+                Section::make('Interview & Admit Card Schedule')
+                    ->description('Set or update interview date, venue, and instructions')
+                    ->schema([
+                        Grid::make(3)->schema([
+                            Forms\Components\DatePicker::make('interview_date')
+                                ->label('Interview / Test Date')
+                                ->native(false),
+
+                            Forms\Components\TextInput::make('interview_time')
+                                ->label('Reporting Time')
+                                ->placeholder('e.g. 10:00 AM / 02:30 PM'),
+
+                            Forms\Components\TextInput::make('interview_venue')
+                                ->label('Interview Venue / Location')
+                                ->placeholder('e.g. Corporate Trade Center, Banani, Dhaka'),
+                        ]),
+
+                        Forms\Components\Textarea::make('interview_instructions')
+                            ->label('Special Candidate Instructions')
+                            ->placeholder('e.g. Bring original passport, 4 photos, and experience certificates.')
+                            ->rows(3),
                     ]),
             ]);
     }
@@ -113,8 +141,9 @@ class JobApplicationResource extends Resource
                                 ->label('Applicant Name')
                                 ->weight('bold'),
 
-                            TextEntry::make('applicant.mobile_no')
+                            TextEntry::make('applicant.phone')
                                 ->label('Applicant Mobile')
+                                ->getStateUsing(fn (JobApplication $record) => $record->applicant?->phone ?: $record->applicant?->mobile_no)
                                 ->icon('heroicon-o-phone')
                                 ->copyable(),
 
@@ -123,6 +152,42 @@ class JobApplicationResource extends Resource
                                 ->dateTime('d M Y, h:i A')
                                 ->icon('heroicon-o-calendar'),
                         ]),
+                    ]),
+
+                // ── Interview Schedule & Admit Card ──
+                Section::make('Interview Call & Admit Card')
+                    ->icon('heroicon-o-ticket')
+                    ->schema([
+                        Grid::make(3)->schema([
+                            TextEntry::make('interview_date')
+                                ->label('Interview Date')
+                                ->date('d M Y')
+                                ->placeholder('Not scheduled yet')
+                                ->icon('heroicon-o-calendar'),
+
+                            TextEntry::make('interview_time')
+                                ->label('Reporting Time')
+                                ->placeholder('Not specified')
+                                ->icon('heroicon-o-clock'),
+
+                            TextEntry::make('interview_venue')
+                                ->label('Venue')
+                                ->placeholder('Not specified')
+                                ->icon('heroicon-o-map-pin'),
+                        ]),
+
+                        TextEntry::make('interview_instructions')
+                            ->label('Candidate Instructions')
+                            ->placeholder('None specified')
+                            ->columnSpanFull(),
+
+                        TextEntry::make('admit_card_btn')
+                            ->label('Interview Slip / Admit Card Link')
+                            ->getStateUsing(fn (JobApplication $record) => $record->admit_card_token ? '📄 View / Print Official Admit Card' : 'Generate Admit Card by Calling for Interview')
+                            ->badge()
+                            ->color(fn (JobApplication $record) => $record->admit_card_token ? 'success' : 'gray')
+                            ->url(fn (JobApplication $record) => $record->admit_card_token ? url('/interview-card/' . $record->admit_card_token) : null)
+                            ->openUrlInNewTab(),
                     ]),
 
                 // ── Circular-Specific Custom Field Requirements & Uploaded Documents ──
@@ -258,7 +323,7 @@ class JobApplicationResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
-                    ->description(fn (JobApplication $record): ?string => $record->applicant?->email),
+                    ->description(fn (JobApplication $record): ?string => $record->applicant?->phone ?: $record->applicant?->mobile_no),
 
                 Tables\Columns\TextColumn::make('jobCircular.title')
                     ->label('Position / Circular')
@@ -271,10 +336,6 @@ class JobApplicationResource extends Resource
                     ->badge()
                     ->color('info')
                     ->sortable(),
-
-                Tables\Columns\TextColumn::make('applicant.mobile_no')
-                    ->label('Mobile')
-                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
@@ -291,11 +352,17 @@ class JobApplicationResource extends Resource
                         'pending' => 'Pending',
                         'reviewed' => 'Reviewed',
                         'shortlisted' => 'Shortlisted',
-                        'interview' => 'Interview',
+                        'interview' => 'Interview Called',
                         'accepted' => 'Accepted',
                         'rejected' => 'Rejected',
                         default => ucfirst($state),
                     })
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('interview_date')
+                    ->label('Interview Date')
+                    ->date('d M Y')
+                    ->description(fn (JobApplication $record) => $record->interview_time ?: null)
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
@@ -328,11 +395,180 @@ class JobApplicationResource extends Resource
             ], layout: Tables\Enums\FiltersLayout::AboveContent)
             ->filtersFormColumns(2)
             ->actions([
+                // Single Action: Call for Interview & Send SMS
+                Actions\Action::make('callForInterview')
+                    ->label('Call for Interview')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('warning')
+                    ->form([
+                        Forms\Components\DatePicker::make('interview_date')
+                            ->label('Interview Date')
+                            ->default(now()->addDays(3))
+                            ->required()
+                            ->native(false),
+
+                        Forms\Components\TextInput::make('interview_time')
+                            ->label('Reporting Time')
+                            ->default('10:00 AM')
+                            ->required(),
+
+                        Forms\Components\TextInput::make('interview_venue')
+                            ->label('Interview & Trade Test Venue')
+                            ->default(function () {
+                                try {
+                                    $settings = app(SiteSettings::class);
+                                    return $settings->address ?? 'Corporate Head Office, Dhaka';
+                                } catch (\Throwable) {
+                                    return 'Corporate Head Office, Dhaka';
+                                }
+                            })
+                            ->required(),
+
+                        Forms\Components\Textarea::make('interview_instructions')
+                            ->label('Instructions for Candidate')
+                            ->default('Bring original Passport, academic/training certificates, and 4 passport size photos.')
+                            ->rows(2),
+
+                        Forms\Components\Textarea::make('custom_message')
+                            ->label('Custom SMS Body (Optional)')
+                            ->placeholder('Leave blank to use default template from SMS settings')
+                            ->helperText('Dynamic tags: {name}, {job_title}, {date}, {time}, {venue}, {card_link}')
+                            ->rows(3),
+
+                        Forms\Components\Toggle::make('update_status')
+                            ->label('Update status to "Interview Called"')
+                            ->default(true),
+                    ])
+                    ->action(function (JobApplication $record, array $data, SmsService $smsService) {
+                        if (empty($record->admit_card_token)) {
+                            $record->admit_card_token = Str::random(32);
+                        }
+
+                        $record->interview_date = $data['interview_date'];
+                        $record->interview_time = $data['interview_time'];
+                        $record->interview_venue = $data['interview_venue'];
+                        $record->interview_instructions = $data['interview_instructions'] ?? null;
+                        $record->interview_called_at = now();
+
+                        if (!empty($data['update_status'])) {
+                            $record->status = 'interview';
+                        }
+
+                        $record->save();
+
+                        // Send Interview SMS
+                        $result = $smsService->sendInterviewSms($record, $data);
+
+                        if ($result['success']) {
+                            Notification::make()
+                                ->title('Interview Scheduled & SMS Sent!')
+                                ->body(!empty($result['simulated']) ? 'SMS Logged in Simulation Mode (Admit card generated).' : 'SMS dispatched to candidate mobile phone.')
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Interview Scheduled but SMS Failed')
+                                ->body('Error: ' . ($result['response'] ?? 'Check SMS settings/balance.'))
+                                ->warning()
+                                ->send();
+                        }
+                    }),
+
+                // Admit Card Direct View Link
+                Actions\Action::make('viewCard')
+                    ->label('Admit Card')
+                    ->icon('heroicon-o-ticket')
+                    ->color('success')
+                    ->visible(fn (JobApplication $record) => !empty($record->admit_card_token))
+                    ->url(fn (JobApplication $record) => url('/interview-card/' . $record->admit_card_token))
+                    ->openUrlInNewTab(),
+
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
                 Actions\DeleteAction::make(),
             ])
             ->bulkActions([
+                // Bulk Action: Call Selected Candidates for Interview with SMS
+                Actions\BulkAction::make('bulkCallForInterview')
+                    ->label('Call Selected for Interview (Bulk SMS)')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('warning')
+                    ->form([
+                        Forms\Components\DatePicker::make('interview_date')
+                            ->label('Interview Date')
+                            ->default(now()->addDays(3))
+                            ->required()
+                            ->native(false),
+
+                        Forms\Components\TextInput::make('interview_time')
+                            ->label('Reporting Time')
+                            ->default('10:00 AM')
+                            ->required(),
+
+                        Forms\Components\TextInput::make('interview_venue')
+                            ->label('Interview & Trade Test Venue')
+                            ->default(function () {
+                                try {
+                                    $settings = app(SiteSettings::class);
+                                    return $settings->address ?? 'Corporate Head Office, Dhaka';
+                                } catch (\Throwable) {
+                                    return 'Corporate Head Office, Dhaka';
+                                }
+                            })
+                            ->required(),
+
+                        Forms\Components\Textarea::make('interview_instructions')
+                            ->label('Instructions for Candidates')
+                            ->default('Bring original Passport, academic/training certificates, and 4 passport size photos.')
+                            ->rows(2),
+
+                        Forms\Components\Textarea::make('custom_message')
+                            ->label('Custom SMS Body (Optional)')
+                            ->placeholder('Leave blank to use default template from SMS settings')
+                            ->helperText('Dynamic tags: {name}, {job_title}, {date}, {time}, {venue}, {card_link}')
+                            ->rows(3),
+
+                        Forms\Components\Toggle::make('update_status')
+                            ->label('Update all selected applicants to "Interview Called"')
+                            ->default(true),
+                    ])
+                    ->action(function (Collection $records, array $data, SmsService $smsService) {
+                        $sentCount = 0;
+                        $failedCount = 0;
+
+                        foreach ($records as $record) {
+                            if (empty($record->admit_card_token)) {
+                                $record->admit_card_token = Str::random(32);
+                            }
+
+                            $record->interview_date = $data['interview_date'];
+                            $record->interview_time = $data['interview_time'];
+                            $record->interview_venue = $data['interview_venue'];
+                            $record->interview_instructions = $data['interview_instructions'] ?? null;
+                            $record->interview_called_at = now();
+
+                            if (!empty($data['update_status'])) {
+                                $record->status = 'interview';
+                            }
+
+                            $record->save();
+
+                            $result = $smsService->sendInterviewSms($record, $data);
+                            if ($result['success']) {
+                                $sentCount++;
+                            } else {
+                                $failedCount++;
+                            }
+                        }
+
+                        Notification::make()
+                            ->title("Bulk Interview Calls Processed ({$sentCount} Sent)")
+                            ->body("Successfully scheduled and sent SMS to {$sentCount} candidates." . ($failedCount > 0 ? " ({$failedCount} failed)." : ""))
+                            ->success()
+                            ->send();
+                    })
+                    ->deselectRecordsAfterCompletion(),
+
                 Actions\DeleteBulkAction::make(),
             ])
             ->defaultSort('created_at', 'desc');

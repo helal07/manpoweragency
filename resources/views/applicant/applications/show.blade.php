@@ -70,6 +70,45 @@
                 </div>
             @endif
 
+            <!-- Interview Call & Admit Card Card -->
+            @if($application->status === 'interview' || $application->admit_card_token)
+                <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-300 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-3 h-3 rounded-full bg-amber-500 animate-ping"></span>
+                            <h4 class="text-lg font-extrabold text-amber-950">🎉 You Are Selected for Interview & Trade Test!</h4>
+                        </div>
+                        @if($application->admit_card_token)
+                            <a href="{{ route('interview-card.show', $application->admit_card_token) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>View & Print Admit Card</span>
+                            </a>
+                        @endif
+                    </div>
+
+                    <div class="grid sm:grid-cols-3 gap-4 pt-2 text-xs">
+                        <div class="bg-white/80 p-3.5 rounded-xl border border-amber-200">
+                            <span class="text-amber-800 font-bold uppercase tracking-wider block text-[10px]">Interview Date</span>
+                            <span class="font-extrabold text-slate-900 text-sm mt-0.5 block">{{ $application->interview_date ? $application->interview_date->format('d M, Y (l)') : 'TBA' }}</span>
+                        </div>
+                        <div class="bg-white/80 p-3.5 rounded-xl border border-amber-200">
+                            <span class="text-amber-800 font-bold uppercase tracking-wider block text-[10px]">Reporting Time</span>
+                            <span class="font-extrabold text-slate-900 text-sm mt-0.5 block">{{ $application->interview_time ?: '10:00 AM' }}</span>
+                        </div>
+                        <div class="bg-white/80 p-3.5 rounded-xl border border-amber-200">
+                            <span class="text-amber-800 font-bold uppercase tracking-wider block text-[10px]">Venue</span>
+                            <span class="font-bold text-slate-900 text-xs mt-0.5 block">{{ $application->interview_venue ?: 'Corporate Office' }}</span>
+                        </div>
+                    </div>
+
+                    @if($application->interview_instructions)
+                        <div class="p-3 bg-white/90 rounded-xl border border-amber-200 text-xs text-amber-950 font-medium">
+                            <strong>Instructions:</strong> {{ $application->interview_instructions }}
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             <!-- Status Timeline -->
             <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm">
                 <h4 class="text-lg font-bold text-slate-800 mb-6">Application Progress</h4>
