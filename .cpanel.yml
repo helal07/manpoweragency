@@ -2,7 +2,8 @@
 deployment:
   tasks:
     # 1. Define deployment target path
-    - export DEPLOYPATH=/home/panaroma/shitalakshyafoundation.com
+    - export DEPLOYPATH=/home/shiitala/shitalakshyafoundation.com
+    
 
     # 2. Ensure target directory exists
     - mkdir -p $DEPLOYPATH
